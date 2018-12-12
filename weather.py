@@ -1,7 +1,12 @@
 import pyowm
-
 # Open Weather Map API
 # My API Key: 95e49145dd2f7199e468eceb3e9acca9
+
+# Weather Class
+class Weather:
+    def __init__(self, location):
+        self.location = location
+        self.owm = pyowm.OWM(API_key='95e49145dd2f7199e468eceb3e9acca9')
 
 
 # Testing/example
