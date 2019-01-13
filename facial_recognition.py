@@ -111,3 +111,4 @@ class FaceRecognizer:
 if __name__ == "__main__":
     rec = FaceRecognizer(enc_location='known_faces', name_conv_location='pictureNames.conv')
     rec.add_person(image='Wesley.jpg', name='Wesley')
+
