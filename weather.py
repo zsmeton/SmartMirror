@@ -7,6 +7,8 @@ class Weather:
     def __init__(self, location):
         self.location = location
         self.owm = pyowm.OWM(API_key='95e49145dd2f7199e468eceb3e9acca9')
+        self.observation = owm.weather_at_coords(lat=current_location['lat'], lon=current_location['lon'])
+        self.weather = observation.get_weather()
 
 
 # Testing/example

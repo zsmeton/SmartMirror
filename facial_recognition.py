@@ -110,5 +110,4 @@ class FaceRecognizer:
 
 if __name__ == "__main__":
     rec = FaceRecognizer(enc_location='known_faces', name_conv_location='pictureNames.conv')
-    path = input('Type in path to unknown image')
-    print(rec.who_is_it(path))
+    rec.add_person(image='Wesley.jpg', name='Wesley')
