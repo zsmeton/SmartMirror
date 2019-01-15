@@ -1,7 +1,45 @@
-#:kivy 1.0.9
+#:kivy 1.10.1
+#: import ew kivy.uix.effectwidget
+
+<LoadingScreen>:
+    canvas:
+        # Main Circle
+        Color:
+            rgb: self.color_r, self.color_g, self.color_b
+        Ellipse:
+            pos: self.center_x - int(self.size_x/2), self.center_y - int(self.size_y/2)
+            size: self.size
+            angle_start: self.starting_angle
+            angle_end: self.ending_angle
+        Color:
+            rgb: 0, 0, 0
+        Ellipse:
+            pos: self.center_x - int((self.size_x - self.thickness)/2), self.center_y - int((self.size_y - self.thickness)/2)
+            size: self.size_x - self.thickness, self.size_y - self.thickness
+            angle_start: self.starting_angle
+            angle_end: self.ending_angle
+        # Bottom Left Circle
+        Color:
+            rgb: self.color_r, self.color_g, self.color_b
+        Ellipse:
+            pos: self.center_x - int(self.size_x/4), self.center_y - int(self.size_y/4)
+            size: self.size_x/2, self.size_y/2
+            angle_start: self.ending_angle+360
+            angle_end: self.starting_angle
+        Color:
+            rgb: 0, 0, 0
+        Ellipse:
+            pos: self.center_x - int((self.size_x/2 - self.thickness)/2), self.center_y - int((self.size_y/2 - self.thickness)/2)
+            size: self.size_x/2 - self.thickness, self.size_y/2 - self.thickness
+            angle_start: self.ending_angle +360
+            angle_end: self.starting_angle
+
 
 <MirrorDisplay>:
-    canvas:
-        Rectangle:
-            pos: self.center_x-5, 0
-            size: 10, self.height
+    load: loading_screen
+
+    LoadingScreen:
+        id: loading_screen
+        center_x: int(root.width/ 2)
+        center_y: int(root.height/ 2)
+
