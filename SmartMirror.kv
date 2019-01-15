@@ -16,8 +16,8 @@
         Ellipse:
             pos: self.center_x - int((self.size_x - self.thickness)/2), self.center_y - int((self.size_y - self.thickness)/2)
             size: self.size_x - self.thickness, self.size_y - self.thickness
-            angle_start: self.starting_angle
-            angle_end: self.ending_angle
+            angle_start: 0
+            angle_end: 360
         # Bottom Left Circle
         Color:
             rgb: self.color_r, self.color_g, self.color_b
@@ -31,8 +31,8 @@
         Ellipse:
             pos: self.center_x - int((self.size_x/2 - self.thickness)/2), self.center_y - int((self.size_y/2 - self.thickness)/2)
             size: self.size_x/2 - self.thickness, self.size_y/2 - self.thickness
-            angle_start: self.ending_angle +360
-            angle_end: self.starting_angle
+            angle_start: 0
+            angle_end: 360
 
 
 <MirrorDisplay>:
