@@ -1,7 +1,7 @@
 #:kivy 1.10.1
-#: import ew kivy.uix.effectwidget
 
-<LoadingScreen>:
+<LoadingCircle>:
+    size_hint: None, None
     canvas:
         # Main Circle
         Color:
@@ -20,7 +20,7 @@
             angle_end: 360
         # Bottom Left Circle
         Color:
-            rgb: self.color_r, self.color_g, self.color_b
+            rgb: 255,255,255
         Ellipse:
             pos: self.center_x - int(self.size_x/4), self.center_y - int(self.size_y/4)
             size: self.size_x/2, self.size_y/2
@@ -35,11 +35,16 @@
             angle_end: 360
 
 
-<MirrorDisplay>:
-    load: loading_screen
-
-    LoadingScreen:
-        id: loading_screen
+<LoadingScreen>:
+    loadCircle: load
+    LoadingCircle:
+        id: load
         center_x: int(root.width/ 2)
         center_y: int(root.height/ 2)
 
+
+<SettingsScreen>:
+    BoxLayout:
+        Button:
+            text: 'To Loading Screen'
+            on_press: root.manager.current = 'menu'

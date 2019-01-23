@@ -1,15 +1,21 @@
 from kivy.app import App
 from kivy.clock import Clock
 from kivy.config import Config
-from kivy.properties import NumericProperty, ObjectProperty, ReferenceListProperty
+from kivy.properties import NumericProperty, ReferenceListProperty, ObjectProperty
+from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.uix.widget import Widget
+from kivy.lang import Builder
 
 # Set Kivy App configurations
 Config.set('graphics', 'fullscreen', 'auto')  # Sets window to fullscreen
+Config.set('graphics', 'multisamples', '8')  # Sets window to fullscreen
+Config.write()
+
+Builder.load_file('SmartMirror.kv')
 
 
 # Widget that creates a small loading screen while other processes run
-class LoadingScreen(Widget):
+class LoadingCircle(Widget):
     starting_angle = NumericProperty(0)
     ending_angle = NumericProperty(0)
     size_x = NumericProperty(100)
@@ -32,16 +38,27 @@ class LoadingScreen(Widget):
             self.starting_angle = 0
 
 
-class MirrorDisplay(Widget):
-    load = ObjectProperty(None)
+class LoadingScreen(Screen):
+    loadCircle = ObjectProperty(None)
+    pass
+
+
+class SettingsScreen(Screen):
+    pass
+
+
 
 
 class SmartMirrorApp(App):
     def build(self):
-        display = MirrorDisplay()
-        Clock.schedule_interval(display.load.update, 1.0 / 60.0)
+        # Create the screen manager
+        sm = ScreenManager()
+        loader = LoadingScreen(name='menu')
+        Clock.schedule_interval(loader.loadCircle.update, 1.0 / 60.0)
+        sm.add_widget(SettingsScreen(name='settings'))
+        sm.add_widget(loader)
 
-        return display
+        return sm
 
 
 if __name__ == '__main__':
