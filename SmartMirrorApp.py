@@ -1,7 +1,9 @@
+from kivy.app import App
 from kivy.clock import Clock
 from kivy.config import Config
 from kivy.lang import Builder
-from kivy.uix.screenmanager import ScreenManager
+from kivy.properties import NumericProperty, ReferenceListProperty, ObjectProperty
+from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.uix.widget import Widget
 
 # Set Kivy App configurations
