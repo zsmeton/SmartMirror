@@ -1,10 +1,10 @@
 from kivy.app import App
 from kivy.clock import Clock
 from kivy.config import Config
+from kivy.lang import Builder
 from kivy.properties import NumericProperty, ReferenceListProperty, ObjectProperty
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.uix.widget import Widget
-from kivy.lang import Builder
 
 # Set Kivy App configurations
 Config.set('graphics', 'fullscreen', 'auto')  # Sets window to fullscreen
@@ -18,10 +18,10 @@ Builder.load_file('SmartMirror.kv')
 class LoadingCircle(Widget):
     starting_angle = NumericProperty(0)
     ending_angle = NumericProperty(0)
-    size_x = NumericProperty(100)
-    size_y = NumericProperty(100)
+    size_x = NumericProperty(400)
+    size_y = NumericProperty(400)
     size = ReferenceListProperty(size_x, size_y)
-    thickness = NumericProperty(10)
+    thickness = NumericProperty(5)
     color_r = 0
     color_g = 230
     color_b = 255
@@ -47,8 +47,6 @@ class SettingsScreen(Screen):
     pass
 
 
-
-
 class SmartMirrorApp(App):
     def build(self):
         # Create the screen manager
@@ -57,7 +55,6 @@ class SmartMirrorApp(App):
         Clock.schedule_interval(loader.loadCircle.update, 1.0 / 60.0)
         sm.add_widget(SettingsScreen(name='settings'))
         sm.add_widget(loader)
-
         return sm
 
 
