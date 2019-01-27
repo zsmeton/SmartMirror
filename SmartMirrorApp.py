@@ -1,4 +1,5 @@
 import threading
+from multiprocessing import Process
 
 from kivy.app import App
 from kivy.clock import Clock
@@ -141,7 +142,7 @@ def weather_image(description):
 
 
 class RecognitionThread(threading.Thread):
-    def __init__(self, thread_id: int, name: str, fileName: str, instance: FaceRecognizer):
+    def __init__(self, thread_id: int, name: str, file_name: str, instance: FaceRecognizer):
         """
         Creates a new thread to run facial recognition on the file "unknown.png"
 
@@ -152,14 +153,37 @@ class RecognitionThread(threading.Thread):
         self.thread_id = thread_id
         self.name = name
         self.instance = instance
-        self.fileName = fileName
+        self.file_name = file_name
 
     def run(self):
         """
         Called when the thread method start() is called, runs the function being threaded
         """
         print("Starting " + self.name)
-        self.instance.update(unknown_file_name=self.fileName)
+        self.instance.update(unknown_file_name=self.file_name)
+        print("Exiting " + self.name)
+
+
+class RecognitionProcess(Process):
+    def __init__(self, process_id: int, name: str, file_name: str, instance: FaceRecognizer):
+        """
+        Creates a new process to run facial recognition on the file "unknown.png"
+
+        :param process_id:
+        :param name: A name to identify the process
+        """
+        super(RecognitionProcess, self).__init__()
+        self.process_id = process_id
+        self.name = name
+        self.instance = instance
+        self.file_name = file_name
+
+    def run(self):
+        """
+        Creates two recognition processes one to see if looking the other to see who it is
+        """
+        print("Starting " + self.name)
+        self.instance.update(unknown_file_name=self.file_name)
         print("Exiting " + self.name)
 
 
@@ -201,7 +225,7 @@ class LoadingCircle(Widget):
 """ Screens """
 
 
-class LoadingScreen(Screen):
+class ThreadLoadingScreen(Screen):
     # Properties
     loadCircle = ObjectProperty(None)
 
@@ -220,6 +244,27 @@ class LoadingScreen(Screen):
             print("Thread (", self.thread.name, ") has not started", sep="")
 
 
+class ProcessLoadingScreen(Screen):
+    # Properties
+    loadCircle = ObjectProperty(None)
+
+    def __init__(self, process, **kw):
+        super().__init__(**kw)
+        self.process = process
+
+    def start_process(self):
+        if not self.process.is_alive():
+            self.process.start()
+            Clock.schedule_interval(self.check_process, 1.0 / 10.0)
+
+    def check_process(self, dt):
+        if self.process.is_alive():
+            print("Process (", self.process.name, ") is running", sep="")
+        else:
+            print("Process (", self.process.name, ") has ended", sep="")
+            Clock.unschedule(self.check_process)
+
+
 class MainScreen(Screen):
     pass
 
@@ -231,18 +276,20 @@ class SmartMirrorApp(App):
     def build(self):
         # Create threads:
         recognizer = FaceRecognizer(enc_location='known_faces', name_conv_location='pictureNames.conv')
-        face_thread = RecognitionThread(thread_id=1, name="Face_Thread", fileName="unknown.png", instance=recognizer)
+        face_process = RecognitionProcess(process_id=1, name="Face Process", file_name="unknown.png",
+                                          instance=recognizer)
+        # face_thread = RecognitionThread(thread_id=1, name="Face_Thread", file_name="unknown.png", instance=recognizer)
 
         # Create the screen manager:
         sm = ScreenManager()
 
         # Create the screens
-        face_loader = LoadingScreen(name='recognition_loading', thread=face_thread)
+        face_loader = ProcessLoadingScreen(name="recognition_loading", process=face_process)
+        # face_loader = ThreadLoadingScreen(name='recognition_loading', thread=face_thread)
         main = MainScreen(name='main')
 
         # schedule functions
         Clock.schedule_interval(face_loader.loadCircle.update, 1.0 / 60.0)
-        Clock.schedule_interval(face_loader.check_thread, 1.0 / 20.0)
 
         # add screens to screen manager
         sm.add_widget(main)
