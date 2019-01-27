@@ -1,3 +1,5 @@
+import threading
+
 from kivy.app import App
 from kivy.clock import Clock
 from kivy.config import Config
@@ -6,12 +8,16 @@ from kivy.properties import NumericProperty, ReferenceListProperty, ObjectProper
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.uix.widget import Widget
 
+from FacialRecognition import FaceRecognizer
+
 # Set Kivy App configurations
 Config.set('graphics', 'fullscreen', 'auto')  # Sets window to fullscreen
 Config.set('graphics', 'multisamples', '8')  # Sets window to fullscreen
 Config.write()
 
 Builder.load_file('SmartMirror.kv')
+
+""" Non-Display functions """
 
 
 # Author: @ApplePie420
@@ -134,6 +140,32 @@ def weather_image(description):
     return source_img
 
 
+class RecognitionThread(threading.Thread):
+    def __init__(self, thread_id: int, name: str, fileName: str, instance: FaceRecognizer):
+        """
+        Creates a new thread to run facial recognition on the file "unknown.png"
+
+        :param thread_id:
+        :param name: A name to identify the thread
+        """
+        threading.Thread.__init__(self)
+        self.thread_id = thread_id
+        self.name = name
+        self.instance = instance
+        self.fileName = fileName
+
+    def run(self):
+        """
+        Called when the thread method start() is called, runs the function being threaded
+        """
+        print("Starting " + self.name)
+        self.instance.update(unknown_file_name=self.fileName)
+        print("Exiting " + self.name)
+
+
+""" Widgets """
+
+
 class DailyWeather(Widget):
     pass
 
@@ -166,23 +198,55 @@ class LoadingCircle(Widget):
             self.starting_angle = 0
 
 
+""" Screens """
+
+
 class LoadingScreen(Screen):
+    # Properties
     loadCircle = ObjectProperty(None)
+
+    def __init__(self, thread, **kw):
+        super().__init__(**kw)
+        self.thread = thread
+
+    def start_thread(self):
+        if not self.thread.is_alive():
+            self.thread.start()
+
+    def check_thread(self, dt):
+        if self.thread.isAlive():
+            print("Thread (", self.thread.name, ") is running", sep="")
+        else:
+            print("Thread (", self.thread.name, ") has not started", sep="")
+
+
+class MainScreen(Screen):
     pass
 
 
-class SettingsScreen(Screen):
-    pass
+""" App """
 
 
 class SmartMirrorApp(App):
     def build(self):
-        # Create the screen manager
+        # Create threads:
+        recognizer = FaceRecognizer(enc_location='known_faces', name_conv_location='pictureNames.conv')
+        face_thread = RecognitionThread(thread_id=1, name="Face_Thread", fileName="unknown.png", instance=recognizer)
+
+        # Create the screen manager:
         sm = ScreenManager()
-        loader = LoadingScreen(name='menu')
-        Clock.schedule_interval(loader.loadCircle.update, 1.0 / 60.0)
-        sm.add_widget(SettingsScreen(name='settings'))
-        sm.add_widget(loader)
+
+        # Create the screens
+        face_loader = LoadingScreen(name='recognition_loading', thread=face_thread)
+        main = MainScreen(name='main')
+
+        # schedule functions
+        Clock.schedule_interval(face_loader.loadCircle.update, 1.0 / 60.0)
+        Clock.schedule_interval(face_loader.check_thread, 1.0 / 20.0)
+
+        # add screens to screen manager
+        sm.add_widget(main)
+        sm.add_widget(face_loader)
         return sm
 
 

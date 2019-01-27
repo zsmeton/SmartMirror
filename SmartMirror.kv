@@ -37,14 +37,15 @@
 
 <LoadingScreen>:
     loadCircle: load
+    on_pre_enter: self.start_thread()
     LoadingCircle:
         id: load
         center_x: int(root.width/ 2)
         center_y: int(root.height/ 2)
 
 
-<SettingsScreen>:
+<MainScreen>:
     BoxLayout:
         Button:
-            text: 'To Loading Screen'
-            on_press: root.manager.current = 'menu'
+            text: 'Detect Person'
+            on_press: root.manager.current = 'recognition_loading'

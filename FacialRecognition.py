@@ -34,6 +34,8 @@ class FaceRecognizer:
         self.known = enc_location
         self.name_converter = name_conv_location
         self.people = dict()
+        self.who = None
+        self.looking = False
         self.load_known()
 
     # Json dump face encoding in known_faces
@@ -85,17 +87,16 @@ class FaceRecognizer:
         else:
             return False
 
-    def who_is_it(self, unknown_file_name: str) -> set:
+    def who_is_it(self, unknown_file_name: str):
         """
         Runs image against list of known faces
 
         :param unknown_file_name: path to image of person
-        :return: name of person(s) in image or unknown
         """
         unknown_picture = face_recognition.load_image_file(unknown_file_name)
         unknown_face_encoding = face_recognition.face_encodings(unknown_picture)
         if len(unknown_face_encoding) < 1:
-            print('Unable to identify any individuals')
+            self.who = {'unknown'}
         else:
             known_faces = set()
             for face in unknown_face_encoding:
@@ -104,9 +105,33 @@ class FaceRecognizer:
                     if face_recognition.compare_faces([enc], face)[0]:
                         known_faces.add(name)
             if known_faces:
-                return known_faces
-        return {'unknown'}
+                self.who = known_faces
+            else:
+                self.who = {'unknown'}
+
+    def are_they_looking(self, unknown_file_name: str):
+        image = face_recognition.load_image_file(unknown_file_name)
+        landmarks = face_recognition.face_landmarks(image)
+        for index in landmarks:
+            if 'left_eye' in index and 'right_eye' in index:
+                self.looking = True
+                break
+            else:
+                self.looking = False
+
+    def update(self, unknown_file_name: str):
+        """
+            Runs who_is_it() and are_they_looking, which will update
+            self.who and self.looking
+
+            :param unknown_file_name: path to image of person
+        """
+        self.are_they_looking(unknown_file_name)
+        self.who_is_it(unknown_file_name)
 
 
 if __name__ == "__main__":
     rec = FaceRecognizer(enc_location='known_faces', name_conv_location='pictureNames.conv')
+    rec.update('unknown.png')
+    print(rec.who)
+    print(rec.looking)
