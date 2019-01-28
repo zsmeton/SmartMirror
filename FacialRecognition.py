@@ -1,3 +1,4 @@
+from multiprocessing import Queue
 import codecs
 import json
 import os
@@ -119,7 +120,7 @@ class FaceRecognizer:
             else:
                 self.looking = False
 
-    def update(self, unknown_file_name: str):
+    def update(self, unknown_file_name: str, queue: Queue):
         """
             Runs who_is_it() and are_they_looking, which will update
             self.who and self.looking
@@ -128,6 +129,8 @@ class FaceRecognizer:
         """
         self.are_they_looking(unknown_file_name)
         self.who_is_it(unknown_file_name)
+        queue.put(self.who)
+        queue.put(self.looking)
 
 
 if __name__ == "__main__":

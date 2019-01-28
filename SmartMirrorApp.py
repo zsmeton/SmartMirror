@@ -1,5 +1,4 @@
-import threading
-from multiprocessing import Process
+from multiprocessing import Process, Queue
 
 from kivy.app import App
 from kivy.clock import Clock
@@ -17,6 +16,10 @@ Config.set('graphics', 'multisamples', '8')  # Sets window to fullscreen
 Config.write()
 
 Builder.load_file('SmartMirror.kv')
+
+""" Global Members """
+user = None
+mirror_in_use = False
 
 """ Non-Display functions """
 
@@ -141,55 +144,6 @@ def weather_image(description):
     return source_img
 
 
-""" Threading/Multiprocess Classes """
-
-
-class RecognitionThread(threading.Thread):
-    def __init__(self, thread_id: int, name: str, file_name: str, instance: FaceRecognizer):
-        """
-        Creates a new thread to run facial recognition on the file "unknown.png"
-
-        :param thread_id:
-        :param name: A name to identify the thread
-        """
-        threading.Thread.__init__(self)
-        self.thread_id = thread_id
-        self.name = name
-        self.instance = instance
-        self.file_name = file_name
-
-    def run(self):
-        """
-        Called when the thread method start() is called, runs the function being threaded
-        """
-        print("Starting " + self.name)
-        self.instance.update(unknown_file_name=self.file_name)
-        print("Exiting " + self.name)
-
-
-class RecognitionProcess(Process):
-    def __init__(self, process_id: int, name: str, file_name: str, instance: FaceRecognizer):
-        """
-        Creates a new process to run facial recognition on the file "unknown.png"
-
-        :param process_id:
-        :param name: A name to identify the process
-        """
-        super(RecognitionProcess, self).__init__()
-        self.process_id = process_id
-        self.name = name
-        self.instance = instance
-        self.file_name = file_name
-
-    def run(self):
-        """
-        Creates two recognition processes one to see if looking the other to see who it is
-        """
-        print("Starting " + self.name)
-        self.instance.update(unknown_file_name=self.file_name)
-
-
-
 """ Custom Events """
 
 """ Widgets """
@@ -230,60 +184,50 @@ class LoadingCircle(Widget):
 """ Screens """
 
 
-class ThreadLoadingScreen(Screen):
-    # Properties
-    loadCircle = ObjectProperty(None)
-
-    def __init__(self, thread, **kw):
-        super().__init__(**kw)
-        self.thread = thread
-
-    def start_thread(self):
-        if not self.thread.is_alive():
-            self.thread.start()
-
-    def check_thread(self, dt):
-        if self.thread.isAlive():
-            print("Thread (", self.thread.name, ") is running", sep="")
-        else:
-            print("Thread (", self.thread.name, ") has not started", sep="")
-
-
 class ProcessLoadingScreen(Screen):
     # Properties
     loadCircle = ObjectProperty(None)
 
-    def __init__(self, instance, process_id, name_process, file_name, **kw):
+    def __init__(self, instance, args, **kw):
         super().__init__(**kw)
         self.instance = instance
-        self.process_id = process_id
-        self.name_process = name_process
-        self.file_name = file_name
-        self.process = RecognitionProcess(process_id=process_id, name=name_process, file_name=file_name,
-                                          instance=instance)
+        self.args = args
+        self.queue = Queue()
+        self.process = Process(target=self.instance, args=(self.args, self.queue))
+        self.results = []
 
     def restart_process(self):
         """
         Creates a new recognition process so that recognition can be run again
         """
-        self.process = RecognitionProcess(process_id=self.process_id, name=self.name_process, file_name=self.file_name,
-                                          instance=self.instance)
+        self.process = Process(target=self.instance, args=(self.args,))
 
     def start_process(self):
         if not self.process.is_alive():
             self.process.start()
             Clock.schedule_interval(self.check_process, 1.0 / 10.0)
-            Clock.schedule_interval(self.loadCircle.update, 1.0 / 60.0)
 
     def check_process(self, dt):
         """
         Checks the current state of the process. Switches back to the main screen if process has finished
         """
         if not self.process.is_alive():
+            # Store process results
+            self.results = []
+            while not self.queue.empty():
+                self.results.append(self.queue.get())
+
+            # Kill Process
             self.process.join()
-            print("Process (", self.process.name, ") has ended", sep="")
+            print("Process has ended")
+
+            # Restart Process
             self.restart_process()
+
+            # Unschedule loading screen functions
             Clock.unschedule(self.check_process)
+            Clock.unschedule(self.loadCircle.update)
+            # return to main screen
             self.manager.current = 'main'
 
 
@@ -298,15 +242,12 @@ class SmartMirrorApp(App):
     def build(self):
         # Create threads:
         recognizer = FaceRecognizer(enc_location='known_faces', name_conv_location='pictureNames.conv')
-        # face_thread = RecognitionThread(thread_id=1, name="Face_Thread", file_name="unknown.png", instance=recognizer)
 
         # Create the screen manager:
         sm = ScreenManager(transition=NoTransition())
 
         # Create the screens
-        face_loader = ProcessLoadingScreen(name="recognition_loading", process_id=1, name_process="Face Process",
-                                           file_name="unknown.png", instance=recognizer)
-        # face_loader = ThreadLoadingScreen(name='recognition_loading', thread=face_thread)
+        face_loader = ProcessLoadingScreen(recognizer.update, "unknown.png", name='recognition_loading')
         main = MainScreen(name='main')
 
         # schedule functions

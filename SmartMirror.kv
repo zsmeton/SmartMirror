@@ -35,15 +35,6 @@
             angle_end: 360
 
 
-<ThreadLoadingScreen>:
-    loadCircle: load
-    on_enter: self.start_thread()
-    LoadingCircle:
-        id: load
-        center_x: int(root.width/ 2)
-        center_y: int(root.height/ 2)
-
-
 <ProcessLoadingScreen>:
     loadCircle: load
     on_enter:
