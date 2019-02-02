@@ -125,6 +125,7 @@ class FaceRecognizer:
             Runs who_is_it() and are_they_looking, which will update
             self.who and self.looking
 
+            :param queue:
             :param unknown_file_name: path to image of person
         """
         self.are_they_looking(unknown_file_name)

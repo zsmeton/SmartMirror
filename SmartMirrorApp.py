@@ -1,3 +1,5 @@
+from multiprocessing import Process, Queue
+
 from kivy.app import App
 from kivy.clock import Clock
 from kivy.config import Config
@@ -6,6 +8,8 @@ from kivy.properties import StringProperty, ReferenceListProperty, NumericProper
 from kivy.uix.label import Label
 from kivy.uix.screenmanager import Screen, NoTransition, ScreenManager
 from kivy.uix.widget import Widget
+
+from FacialRecognition import FaceRecognizer
 
 # Set Kivy App configurations
 Config.set('graphics', 'fullscreen', 'auto')  # Sets window to fullscreen
@@ -40,6 +44,7 @@ class LoadingIcon(Widget):
             self.ending_angle = 0
             self.starting_angle = 0
 
+# TODO: Add process subclass
 
 # TODO: Add Weather Display Widget
 class WeatherDisplay(Widget):
@@ -62,11 +67,16 @@ class SleepScreen(Screen):
 # TODO: Develop Main Screen
 class MainScreen(Screen):
     name = StringProperty('main')
+    # Create loading widget
     loading_icon = LoadingIcon()
     loading_icon.thickness = 2
     loading_icon.outer_color = (0, 0, 255)
-    counter = 0
-    label = Label(text='Loading Finished')
+    # Create introduction widget
+    introduction_label = Label(text='Loading Finished')
+    # Create identification process
+    queue = Queue()
+    recognizer = FaceRecognizer
+    process = Process(target=recognizer.update, args=('unknown.py', queue, ))
 
     def __init__(self, **kw):
         super().__init__(**kw)
@@ -74,19 +84,23 @@ class MainScreen(Screen):
         Clock.schedule_interval(self.update, 1.0 / 60.0)
         # Add Widgets
         self.add_widget(self.loading_icon)
+        self.process.start()
 
     def update(self, dt=None):
+        # Animate all children
         for child in self.children:
             try:
                 child.update()
             except AttributeError:
-                print(child, "doesn't need an update")
-        self.counter += 1
-        print(self.counter)
-        if self.counter == 60:
+                pass
+
+        # Check processes
+        if not self.process.is_alive():
             self.remove_widget(self.loading_icon)
-            print('removed')
-            self.add_widget(self.label)
+            self.process.join()
+            if not self.introduction_label.parent:
+                self.introduction_label.text = self.queue.get()
+                self.add_widget(self.introduction_label)
 
 
 # TODO: Develop Calendar Screen
