@@ -14,9 +14,9 @@ class WeatherShape(Enum):
         """
         :return str: a path to the image representing the shape
         """
-        image = {self.RAINDROP: path.join("weather", "cloudy.png"),
+        image = {self.RAINDROP: path.join("weather", "snowflake.png"),
                  self.SNOWFLAKE: path.join("weather", "snowflake.png"),
-                 self.CLOUD: path.join("weather", "cloudy.png"),
-                 self.SUN: path.join("weather", "sun.png"),
-                 self.MOON: path.join("weather", "night.png")}
+                 self.CLOUD: path.join("weather", "snowflake.png"),
+                 self.SUN: path.join("weather", "snowflake.png"),
+                 self.MOON: path.join("weather", "snowflake.png")}
         return image.get(self)

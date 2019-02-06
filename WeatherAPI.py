@@ -56,6 +56,9 @@ class BaseWeather:
             weather['unit'] = 'UV'
         elif self.timeDay == TimeOfDay.NIGHT:
             weather['shape'] = WeatherShape.MOON
+            weather['fill%'] = 1
+            weather['value'] = ""
+            weather['unit'] = ""
         else:
             print('Unknown shape')
             exit(0)
