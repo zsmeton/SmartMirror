@@ -1,0 +1,146 @@
+#:kivy 1.10.1
+
+# Widgets #
+<LoadingIcon>:
+    size_hint: None, None
+    center_x: int(root.width/ 2)
+    center_y: int(root.height/ 2)
+    canvas:
+        # Outer Circle
+        Color:
+            rgb: 0,225,255
+        Ellipse:
+            pos: self.center_x - int(self.size[0]/2), self.center_y - int(self.size[1]/2)
+            size: self.size
+            angle_start: self.starting_angle
+            angle_end: self.ending_angle
+        Color:
+            rgb: self.other_color
+        Ellipse:
+            pos: self.center_x - int((self.size[0] - self.thickness)/2), self.center_y - int((self.size[1] - self.thickness)/2)
+            size: self.size[0] - self.thickness, self.size[1] - self.thickness
+            angle_start: 0
+            angle_end: 360
+        # Inner Circle
+        Color:
+            rgb: self.inner_color
+        Ellipse:
+            pos: self.center_x - int(self.size[0]/4), self.center_y - int(self.size[1]/4)
+            size: self.size[0]/2, self.size[1]/2
+            angle_start: self.ending_angle+360
+            angle_end: self.starting_angle
+        Color:
+            rgb: self.other_color
+        Ellipse:
+            pos: self.center_x - int((self.size[0]/2 - self.thickness)/2), self.center_y - int((self.size[1]/2 - self.thickness)/2)
+            size: self.size[0]/2 - self.thickness, self.size[1]/2 - self.thickness
+            angle_start: 0
+            angle_end: 360
+
+<WeatherIcon>:
+    canvas:
+        # Main Circle
+        Color:
+            rgb: self.other_color
+        Ellipse:
+            pos: self.pos
+            size: self.size
+            angle_start: 0
+            angle_end: 360
+        Color:
+            rgb: self.fill_color
+        Ellipse:
+            pos: self.pos
+            size: self.size
+            angle_start: 0
+            angle_end: self.ending_angle
+        Color:
+            rgb: 0,255,0
+        Rectangle:
+            source: self.source
+            pos: self.pos
+            size: self.size
+
+
+<WeatherDisplay>:
+    current_icon: current_shape
+    hour_2_icon: hour_2_shape
+    hour_4_icon: hour_4_shape
+    hour_6_icon: hour_6_shape
+    hour_8_icon: hour_8_shape
+    hour_10_icon: hour_10_shape
+    hour_12_icon: hour_12_shape
+
+    BoxLayout:
+        orientation: 'vertical'
+        WeatherIcon:
+            size_hint_y: None
+            size_hint_x: None
+            height: self.width
+            width: self.height
+            id: current_shape
+            pos_hint_x: 0.5
+        BoxLayout:
+            orientation: 'horizontal'
+            WeatherIcon:
+                size_hint_y: None
+                height: self.width
+                width: self.height
+                id: hour_2_shape
+            WeatherIcon:
+                size_hint_y: None
+                height: self.width
+                width: self.height
+                id: hour_4_shape
+            WeatherIcon:
+                size_hint_y: None
+                height: self.width
+                width: self.height
+                id: hour_6_shape
+            WeatherIcon:
+                size_hint_y: None
+                height: self.width
+                width: self.height
+                id: hour_8_shape
+            WeatherIcon:
+                size_hint_y: None
+                height: self.width
+                width: self.height
+                id: hour_10_shape
+            WeatherIcon:
+                size_hint_y: None
+                height: self.width
+                width: self.height
+                id: hour_12_shape
+
+# Screens #
+
+<SleepScreen>:
+    screen_manager: self.screen_manager
+
+<MainScreen>:
+    screen_manager: self.screen_manager
+    weather_widget: weather
+    laoding_icon: loading
+    AnchorLayout:
+        anchor_y:'top'
+        anchor_x:'right'
+        WeatherDisplay:
+            id: weather
+            size_hint: 0.5,1
+
+    AnchorLayout:
+        anchor_y:'bottom'
+        anchor_x:'left'
+        LoadingIcon:
+            id: loading
+            size_hint: 0.25,0.25
+            thickness: 2
+
+
+<CalendarScreen>:
+    screen_manager: self.screen_manager
+
+<WeatherScreen>:
+    screen_manager: self.screen_manager<WeatherScreen>:
+    screen_manager: self.screen_manager
