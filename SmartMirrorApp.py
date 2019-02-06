@@ -10,6 +10,8 @@ from kivy.uix.screenmanager import Screen, NoTransition, ScreenManager
 from kivy.uix.widget import Widget
 
 from FacialRecognition import FaceRecognizer
+from WeatherJSON import weather_hook
+import json
 
 # Set Kivy App configurations
 Config.set('graphics', 'fullscreen', 'auto')  # Sets window to fullscreen
@@ -31,7 +33,8 @@ class LoadingIcon(Widget):
     thickness = NumericProperty(5)
 
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+        super().__init__()
+        self.__dict__.update(kwargs)
 
     def update(self, dt=None):
         if self.starting_angle // 360 == 0:
@@ -44,11 +47,32 @@ class LoadingIcon(Widget):
             self.ending_angle = 0
             self.starting_angle = 0
 
-# TODO: Add process subclass
+# TODO: create weather icon widget
+
 
 # TODO: Add Weather Display Widget
 class WeatherDisplay(Widget):
-    pass
+    # Properties
+    inner_color = (255, 255, 255)
+    other_color = (0, 0, 0)
+    starting_angle = NumericProperty(0)
+    ending_angle = NumericProperty(0)
+    size_x = NumericProperty(100)
+    size_y = NumericProperty(100)
+    size = ReferenceListProperty(size_x, size_y)
+    thickness = NumericProperty(5)
+    weather = None
+
+    def __init__(self, **kwargs):
+        super().__init__()
+        self.__dict__.update(kwargs)
+
+    def update(self, dt=None):
+        with open('weather.txt', 'r') as fin:
+            self.weather = json.load(fin, object_hook=weather_hook)
+            #self.weather = json.load(fin)
+        print(self.weather)
+
 
 
 # TODO: Add Calendar Display Widget
@@ -68,15 +92,13 @@ class SleepScreen(Screen):
 class MainScreen(Screen):
     name = StringProperty('main')
     # Create loading widget
-    loading_icon = LoadingIcon()
-    loading_icon.thickness = 2
-    loading_icon.outer_color = (0, 0, 255)
-    # Create introduction widget
-    introduction_label = Label(text='Loading Finished')
-    # Create identification process
-    queue = Queue()
-    recognizer = FaceRecognizer
-    process = Process(target=recognizer.update, args=('unknown.py', queue, ))
+    loading_icon = LoadingIcon(thickness=2, outer_color=(0, 0, 255))
+    # create weather widget
+    weather_widget = WeatherDisplay()
+    # # Create identification process
+    # queue = Queue()
+    # recognizer = FaceRecognizer
+    # process = Process(target=recognizer.update, args=(('unknown.py', queue)))
 
     def __init__(self, **kw):
         super().__init__(**kw)
@@ -84,7 +106,7 @@ class MainScreen(Screen):
         Clock.schedule_interval(self.update, 1.0 / 60.0)
         # Add Widgets
         self.add_widget(self.loading_icon)
-        self.process.start()
+        self.add_widget(self.weather_widget)
 
     def update(self, dt=None):
         # Animate all children
@@ -94,13 +116,13 @@ class MainScreen(Screen):
             except AttributeError:
                 pass
 
-        # Check processes
-        if not self.process.is_alive():
-            self.remove_widget(self.loading_icon)
-            self.process.join()
-            if not self.introduction_label.parent:
-                self.introduction_label.text = self.queue.get()
-                self.add_widget(self.introduction_label)
+        # # Check processes
+        # if not self.process.is_alive():
+        #     self.remove_widget(self.loading_icon)
+        #     self.process.join()
+        #     if not self.introduction_label.parent:
+        #         self.introduction_label.text = self.queue.get()
+        #         self.add_widget(self.introduction_label)
 
 
 # TODO: Develop Calendar Screen

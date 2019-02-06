@@ -112,7 +112,6 @@ class WeatherAPI:
             with open(self.writeFile, 'w') as fout:
                 out = self.get_weather()
                 json.dump(out, fout, cls=WeatherEncoder)
-
             # Update time since forecast
             self.time_since_last_forecast = time.time()
 

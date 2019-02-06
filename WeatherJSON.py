@@ -8,20 +8,29 @@ from WeatherShape import WeatherShape
 class WeatherEncoder(JSONEncoder):
     def default(self, obj):
         if type(obj) == WeatherShape:
-            return {"__weather_enum__": str(obj)}
+            return {"__weather_enum__": str(obj.value)}
         elif type(obj) == TimeOfDay:
-            return {"__time_enum__": str(obj)}
+            return {"__time_enum__": str(obj.value)}
         else:
             JSONEncoder.default(self, obj)
 
-# custom decoder hook for weather objects
-def as_enum(d):
+
+def weather_hook(d):
+    """
+    Custom decoder hook for weather objects
+
+    :param d: json dumped dictionary
+    :return: python dictionary
+
+    Example:
+        text = json.dumps(data, cls=WeatherEncoder)
+        json.loads(text, object_hook=weather_hook)
+    """
     if "__weather_enum__" in d:
-        name, member = d["__weather_enum__"].split(".")
-        return getattr(WeatherShape[name], member)
+        value = int(d["__weather_enum__"])
+        return WeatherShape(value)
     elif "__time_enum__" in d:
-        name, member = d["__time_enum__"].split(".")
-        return getattr(TimeOfDay[name], member)
+        value = int(d["__time_enum__"])
+        return TimeOfDay(value)
     else:
         return d
-
