@@ -16,7 +16,12 @@ class WeatherShape(Enum):
         """
         image = {self.RAINDROP: path.join("weather", "raindrop.png"),
                  self.SNOWFLAKE: path.join("weather", "snowflake.png"),
-                 self.CLOUD: path.join("weather", "snowflake.png"),
+                 self.CLOUD: path.join("weather", "sun.png"),
                  self.SUN: path.join("weather", "sun.png"),
-                 self.MOON: path.join("weather", "snowflake.png")}
+                 self.MOON: path.join("weather", "raindrop.png")}
         return image.get(self)
+
+
+if __name__ == '__main__':
+    for shape in WeatherShape:
+        print(shape.shape_to_image())
