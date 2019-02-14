@@ -17,8 +17,8 @@ from forecastiopy.FIOHourly import FIOHourly
 # Key: 58bd3b25da2aae9c321d6f35183c2a8d
 # Free up to 1000 requests per day
 
-RAIN_SNOW_THRESHOLD = 0.1
-CLOUD_COVER_THRESHOLD = 0.1
+RAIN_SNOW_THRESHOLD = 0.15
+CLOUD_COVER_THRESHOLD = 0.2
 WEATHER_UPDATE_TIME = 110
 
 
@@ -96,6 +96,7 @@ class ForecastWeather(BaseWeather):
 
 # Weather Class
 class WeatherAPI:
+
     def __init__(self, location, writeFile):
         self.location = location
         self.time_since_last_forecast = 0

@@ -1,11 +1,13 @@
 import pygame
 from PIL import Image, ImageDraw
-from pygame import Color, draw
+from pygame import Color, draw, gfxdraw
 from pygame.sprite import DirtySprite, LayeredDirty
 
 from Display import WIDTH, HEIGHT
 from MathExtension import variable_mapping
 from WeatherShape import WeatherShape
+
+pygame.font.init()
 
 # Constants
 FILL_TO_ANGLE = 360
@@ -99,6 +101,66 @@ class WeatherIcon(DirtySprite):
             self.dirty = 0
 
 
+class MainWeatherIcon(WeatherIcon):
+    temperature = 10
+    unit = "%"
+    text_color = Color(255, 255, 255, 255)
+    text_ratio = 4
+
+    def __init__(self, *groups, **kwargs):
+        super().__init__(*groups, **kwargs)
+        self.font = pygame.font.SysFont('Arial', self.diameter // self.text_ratio)
+
+    def update(self):
+        """
+        Update redraws the image for the WeatherIcon only if the object has just been initialized or set_icon() has
+        been called recently.
+        """
+        if self.dirty:
+            super().update()
+            self.font = pygame.font.SysFont('Arial', self.diameter // self.text_ratio)
+            textsurface = self.font.render(f'{round(float(self.temperature))}{self.unit}', True, self.text_color)
+            textsurface_rect = textsurface.get_rect()
+            textsurface_rect.center = self.image.get_rect().center
+            self.image.blit(textsurface, textsurface_rect)
+
+    def set_icon_information(self, shape: WeatherShape, fill: float, temperature: int, unit: str):
+        super().set_icon(shape, fill)
+        self.temperature = temperature
+        self.unit = unit
+        return self
+
+
+class SmallWeatherIcon(WeatherIcon):
+    value = 10
+    unit = "%"
+    text_color = Color(255, 255, 255, 255)
+    text_ratio = 5
+
+    def __init__(self, *groups, **kwargs):
+        super().__init__(*groups, **kwargs)
+        self.font = pygame.font.SysFont('Arial', self.diameter // self.text_ratio)
+
+    def update(self):
+        """
+        Update redraws the image for the WeatherIcon only if the object has just been initialized or set_icon() has
+        been called recently.
+        """
+        if self.dirty:
+            super().update()
+            self.font = pygame.font.SysFont('Arial', self.diameter // self.text_ratio)
+            textsurface = self.font.render(f'{round(float(self.value))}{self.unit}', True, self.text_color)
+            textsurface_rect = textsurface.get_rect()
+            textsurface_rect.center = self.image.get_rect().center
+            self.image.blit(textsurface, textsurface_rect)
+
+    def set_icon_information(self, shape: WeatherShape, fill: float, value: int, unit: str):
+        super().set_icon(shape, fill)
+        self.value = value
+        self.unit = unit
+        return self
+
+
 class SpriteGrid(DirtySprite):
     # Properties
     sprites = []
@@ -130,6 +192,10 @@ class SpriteGrid(DirtySprite):
         self.sprites = []
         for sprite in args:
             self.sprites.append(sprite)
+        self.dirty = 1
+
+    def add_icon(self, sprite):
+        self.sprites.append(sprite)
         self.dirty = 1
 
     def do_layout(self):
@@ -192,6 +258,10 @@ class TemperatureGraph(DirtySprite):
     height = 100
     antialiased = False
     thickness = 3
+    unit = "°"
+    text_color = Color(255, 255, 255)
+    text_background_color = Color(100, 100, 100)
+    padding = 10
 
     def __init__(self, *members, **kwargs):
         super().__init__()
@@ -227,6 +297,32 @@ class TemperatureGraph(DirtySprite):
         """
         self.rect.center = (x, y)
 
+    def _draw_lines(self, max_temp, min_temp, spacing, data, color):
+        circle_padding = 3
+        font = pygame.font.SysFont('Arial', int(spacing // 8))
+        point_list = []
+        for x, temp in enumerate(data):
+            point_list.append([x * spacing + spacing / 2,
+                               variable_mapping(temp, min_temp, max_temp, self.height - self.padding,
+                                                0 + self.padding)])
+
+        if self.antialiased:
+            draw.aalines(self.image, color, False, point_list)
+        else:
+            draw.lines(self.image, color, False, point_list, self.thickness)
+
+        for temp,point in zip(data,point_list):
+            textsurface = font.render(f'{round(float(temp))}{self.unit}', True, self.text_color)
+            textsurface_rect = textsurface.get_rect()
+            textsurface_rect.center = point
+            gfxdraw.aacircle(self.image, textsurface_rect.centerx, textsurface_rect.centery,
+                             textsurface_rect.width // 2 + circle_padding,
+                             self.text_background_color)
+            gfxdraw.filled_circle(self.image, textsurface_rect.centerx, textsurface_rect.centery,
+                                  textsurface_rect.width // 2 + circle_padding,
+                                  self.text_background_color)
+            self.image.blit(textsurface, textsurface_rect)
+
     def update(self):
         """
         Updates the graphics if the object has just been created or set_temperatures has been called
@@ -253,35 +349,21 @@ class TemperatureGraph(DirtySprite):
                 for i in range(0, self.num_of_graphs):
                     temp_x_spacing = (self.width / len(self.temperatures[i]))
                     # create a point list for the temperatures
-                    point_list = []
-                    for x, temp in enumerate(self.temperatures[i]):
-                        point_list.append([x * temp_x_spacing + temp_x_spacing / 2,
-                                           variable_mapping(temp, min_temp, max_temp, 0, self.height)])
-                    if self.antialiased:
-                        draw.aalines(self.image, self.line_colors[i], False, point_list)
-                    else:
-                        draw.lines(self.image, self.line_colors[i], False, point_list, self.thickness)
-
+                    self._draw_lines(max_temp, min_temp, temp_x_spacing, self.temperatures[i], self.line_colors[i])
             else:
-                point_list = []
-                for i, temp in enumerate(self.temperatures):
-                    point_list.append([i * temp_x_spacing + temp_x_spacing / 2,
-                                       variable_mapping(temp, min_temp, max_temp, 0, self.height)])
-                if self.antialiased:
-                    draw.aalines(self.image, self.line_color, False, point_list)
-                else:
-                    draw.lines(self.image, self.line_colors[i], False, point_list, self.thickness)
+                self._draw_lines(max_temp, min_temp, temp_x_spacing, self.temperatures, self.line_colors)
 
 
 class WeatherWidget(DirtySprite):
+    center = 0.8
     # Create Widgets Dirty Sprites
-    current_weather_icon = WeatherIcon(diameter=(WIDTH if WIDTH < HEIGHT else HEIGHT) // 10)
+    current_weather_icon = MainWeatherIcon(diameter=(WIDTH if WIDTH < HEIGHT else HEIGHT) // 10)
     hour_grid = SpriteGrid(width=WIDTH / 4)
     days_grid = SpriteGrid(width=WIDTH / 4)
     hour_temperatures = TemperatureGraph(width=WIDTH / 4, height=HEIGHT / 10,
-                                         line_colors=[Color(255, 214, 51), Color(255, 52, 144)], num_of_graphs=2)
+                                         line_colors=[Color(72, 127, 255), Color(51, 255, 51)], num_of_graphs=2)
     day_temperatures = TemperatureGraph(width=WIDTH / 4, height=HEIGHT / 10,
-                                        line_colors=[Color(255, 214, 51), Color(255, 52, 144)], num_of_graphs=2)
+                                        line_colors=[Color(72, 127, 255), Color(51, 255, 51)], num_of_graphs=2)
 
     sprites = LayeredDirty()
     sprites.add(current_weather_icon, hour_grid, days_grid, hour_temperatures, day_temperatures)
@@ -289,11 +371,11 @@ class WeatherWidget(DirtySprite):
     def __init__(self, *groups):
         super().__init__(*groups)
         # set icon locations
-        self.current_weather_icon.move(int(0.75 * WIDTH), int(0.10 * HEIGHT))
-        self.hour_grid.move(int(0.75 * WIDTH), int(0.2 * HEIGHT))
-        self.days_grid.move(int(0.75 * WIDTH), int(0.4 * HEIGHT))
-        self.hour_temperatures.move(int(0.75 * WIDTH), int(0.3 * HEIGHT))
-        self.day_temperatures.move(int(0.75 * WIDTH), int(0.5 * HEIGHT))
+        self.current_weather_icon.move(int(self.center * WIDTH), int(0.10 * HEIGHT))
+        self.hour_grid.move(int(self.center * WIDTH), int(0.2 * HEIGHT))
+        self.days_grid.move(int(self.center * WIDTH), int(0.4 * HEIGHT))
+        self.hour_temperatures.move(int(self.center * WIDTH), int(0.3 * HEIGHT))
+        self.day_temperatures.move(int(self.center * WIDTH), int(0.5 * HEIGHT))
 
         # create object surface and rectangle
         self.image = pygame.Surface([WIDTH, HEIGHT])
@@ -304,31 +386,22 @@ class WeatherWidget(DirtySprite):
         Sets the weather of all corresponding graphics
         :param weather_dict: weather dict created by WeatherAPI
         """
-        self.current_weather_icon.set_icon(shape=weather_dict['current']['shape'],
-                                           fill=weather_dict['current']['fill%'])
-        print(weather_dict['current']['fill%'] * FILL_TO_ANGLE)
-        self.hour_grid.update_icons(WeatherIcon().set_icon(shape=weather_dict['hourly'][0]['shape'],
-                                                           fill=weather_dict['hourly'][0]['fill%']),
-                                    WeatherIcon().set_icon(shape=weather_dict['hourly'][1]['shape'],
-                                                           fill=weather_dict['hourly'][1]['fill%']),
-                                    WeatherIcon().set_icon(shape=weather_dict['hourly'][2]['shape'],
-                                                           fill=weather_dict['hourly'][2]['fill%']),
-                                    WeatherIcon().set_icon(shape=weather_dict['hourly'][3]['shape'],
-                                                           fill=weather_dict['hourly'][3]['fill%']),
-                                    WeatherIcon().set_icon(shape=weather_dict['hourly'][4]['shape'],
-                                                           fill=weather_dict['hourly'][4]['fill%']))
-        self.days_grid.update_icons(WeatherIcon().set_icon(shape=weather_dict['forecast'][0]['shape'],
-                                                           fill=weather_dict['forecast'][0]['fill%']),
-                                    WeatherIcon().set_icon(shape=weather_dict['forecast'][1]['shape'],
-                                                           fill=weather_dict['forecast'][1]['fill%']),
-                                    WeatherIcon().set_icon(shape=weather_dict['forecast'][2]['shape'],
-                                                           fill=weather_dict['forecast'][2]['fill%']),
-                                    WeatherIcon().set_icon(shape=weather_dict['forecast'][3]['shape'],
-                                                           fill=weather_dict['forecast'][3]['fill%']),
-                                    WeatherIcon().set_icon(shape=weather_dict['forecast'][4]['shape'],
-                                                           fill=weather_dict['forecast'][4]['fill%']),
-                                    WeatherIcon().set_icon(shape=weather_dict['forecast'][5]['shape'],
-                                                           fill=weather_dict['forecast'][5]['fill%']))
+        self.current_weather_icon.set_icon_information(shape=weather_dict['current']['shape'],
+                                                       fill=weather_dict['current']['fill%'],
+                                                       temperature=weather_dict['current']['temperature'],
+                                                       unit="°")
+        self.hour_grid.update_icons()
+        for i in range(0, 5):
+            self.hour_grid.add_icon(SmallWeatherIcon().set_icon_information(shape=weather_dict['hourly'][i]['shape'],
+                                                                            fill=weather_dict['hourly'][i]['fill%'],
+                                                                            value=weather_dict['hourly'][i]['value'],
+                                                                            unit=weather_dict['hourly'][i]['unit']))
+        self.days_grid.update_icons()
+        for i in range(0, 6):
+            self.days_grid.add_icon(SmallWeatherIcon().set_icon_information(shape=weather_dict['forecast'][i]['shape'],
+                                                                            fill=weather_dict['forecast'][i]['fill%'],
+                                                                            value=weather_dict['forecast'][i]['value'],
+                                                                            unit=weather_dict['forecast'][i]['unit']))
         self.hour_temperatures.set_temperatures([weather_dict['hourly'][0]['temperature'],
                                                  weather_dict['hourly'][1]['temperature'],
                                                  weather_dict['hourly'][2]['temperature'],

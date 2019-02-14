@@ -16,7 +16,7 @@ class WeatherShape(Enum):
         """
         image = {self.RAINDROP: path.join("weather", "raindrop.png"),
                  self.SNOWFLAKE: path.join("weather", "snowflake.png"),
-                 self.CLOUD: path.join("weather", "sun.png"),
+                 self.CLOUD: path.join("weather", "moon.png"),
                  self.SUN: path.join("weather", "sun.png"),
                  self.MOON: path.join("weather", "moon.png")}
         return image.get(self)
