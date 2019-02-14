@@ -15,7 +15,7 @@ BACKGROUND_COLOR = Color(0)
 
 # EVENT TIMERS
 class EventTimers(Enum):
-    GET_WEATHER = 60000
+    GET_WEATHER = 30000
 
     def get_event(self):
         events = {self.GET_WEATHER: USEREVENT + 1}
@@ -47,11 +47,6 @@ class SmartMirrorApp:
         self.my_sprites.add(self.weather_widget)
         self.my_sprites.clear(self.screen, self.background)
 
-        # TODO: Remove test
-        with open(self.weather_file, 'r') as fin:
-            self.weather = json.load(fin, object_hook=weather_hook)
-
-        # TODO: test end
         # Set event timers
         self.set_timers()
         # add events to queue
@@ -91,10 +86,6 @@ class SmartMirrorApp:
             # Update spites
             self.my_sprites.update()
             rects = self.my_sprites.draw(self.screen)
-
-            for sprite in self.my_sprites:
-                print(sprite.image.get_rect())
-
             # draw non sprites
 
             # draw display

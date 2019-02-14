@@ -51,7 +51,7 @@ class BaseWeather:
             weather['unit'] = '%'
         elif self.timeDay == TimeOfDay.DAY:
             weather['shape'] = WeatherShape.SUN
-            weather['fill%'] = self.uv // 11
+            weather['fill%'] = self.uv / 11
             weather['value'] = f'{self.uv}'
             weather['unit'] = 'UV'
         elif self.timeDay == TimeOfDay.NIGHT:
@@ -188,7 +188,7 @@ class WeatherAPI:
 
             # get forecast weather
             for day in range(2, daily.days()):
-                day_weather = BaseWeather()
+                day_weather = ForecastWeather()
                 day_data = daily.get(day)
                 day_weather.summary = day_data['summary']
                 day_weather.precipProbability = day_data['precipProbability']
@@ -196,6 +196,8 @@ class WeatherAPI:
                 day_weather.lowTemperature = day_data['temperatureLow']
                 day_weather.cloudCover = day_data['cloudCover']
                 day_weather.uv = day_data['uvIndex']
+                day_weather.lowTemperature = day_data['temperatureMin']
+                day_weather.highTemperature = day_data['temperatureMax']
                 try:
                     day_weather.precipType = day_data['precipType']
                 except KeyError:
