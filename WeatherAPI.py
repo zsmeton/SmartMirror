@@ -17,7 +17,7 @@ from forecastiopy.FIOHourly import FIOHourly
 # Key: 58bd3b25da2aae9c321d6f35183c2a8d
 # Free up to 1000 requests per day
 
-RAIN_SNOW_THRESHOLD = 0.15
+RAIN_SNOW_THRESHOLD = 0.10
 CLOUD_COVER_THRESHOLD = 0.2
 WEATHER_UPDATE_TIME = 110
 

@@ -128,6 +128,7 @@ class MainWeatherIcon(WeatherIcon):
         super().set_icon(shape, fill)
         self.temperature = temperature
         self.unit = unit
+        self.dirty = 1
         return self
 
 
@@ -158,6 +159,7 @@ class SmallWeatherIcon(WeatherIcon):
         super().set_icon(shape, fill)
         self.value = value
         self.unit = unit
+        self.dirty = 1
         return self
 
 
@@ -355,7 +357,7 @@ class TemperatureGraph(DirtySprite):
 
 
 class WeatherWidget(DirtySprite):
-    center = 0.8
+    center = 0.85
     # Create Widgets Dirty Sprites
     current_weather_icon = MainWeatherIcon(diameter=(WIDTH if WIDTH < HEIGHT else HEIGHT) // 10)
     hour_grid = SpriteGrid(width=WIDTH / 4)
@@ -416,12 +418,14 @@ class WeatherWidget(DirtySprite):
                                                 weather_dict['forecast'][1]['highTemperature'],
                                                 weather_dict['forecast'][2]['highTemperature'],
                                                 weather_dict['forecast'][3]['highTemperature'],
-                                                weather_dict['forecast'][4]['highTemperature']],
+                                                weather_dict['forecast'][4]['highTemperature'],
+                                                weather_dict['forecast'][5]['highTemperature']],
                                                [weather_dict['forecast'][0]['lowTemperature'],
                                                 weather_dict['forecast'][1]['lowTemperature'],
                                                 weather_dict['forecast'][2]['lowTemperature'],
                                                 weather_dict['forecast'][3]['lowTemperature'],
-                                                weather_dict['forecast'][4]['lowTemperature']])
+                                                weather_dict['forecast'][4]['lowTemperature'],
+                                                weather_dict['forecast'][5]['lowTemperature']])
 
     def update(self):
         """
