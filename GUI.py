@@ -191,16 +191,27 @@ class SpriteGrid(DirtySprite):
         self.dirty = 1
 
     def update_icons(self, *args):
+        """
+        Removes all old icons then adds the sprites listed in args
+        :param args:
+        """
         self.sprites = []
         for sprite in args:
             self.sprites.append(sprite)
         self.dirty = 1
 
     def add_icon(self, sprite):
+        """
+        Adds a sprite to the grid layout.
+        :param sprite:
+        """
         self.sprites.append(sprite)
         self.dirty = 1
 
     def do_layout(self):
+        """
+        Lays out sprites based on sprite sizes and grid size.
+        """
         old_center_location = self.rect.center
 
         # figure out the width of each grid
@@ -302,6 +313,9 @@ class TemperatureGraph(DirtySprite):
     def _draw_lines(self, max_temp, min_temp, spacing, data, color):
         circle_padding = 3
         font = pygame.font.SysFont('Arial', int(spacing // 8))
+
+        # draw lines for temperature graph
+        # generate point list based off of temperature values and sprite width
         point_list = []
         for x, temp in enumerate(data):
             point_list.append([x * spacing + spacing / 2,
@@ -313,6 +327,7 @@ class TemperatureGraph(DirtySprite):
         else:
             draw.lines(self.image, color, False, point_list, self.thickness)
 
+        # draw circles and temperature values
         for temp,point in zip(data,point_list):
             textsurface = font.render(f'{round(float(temp))}{self.unit}', True, self.text_color)
             textsurface_rect = textsurface.get_rect()
@@ -366,7 +381,7 @@ class WeatherWidget(DirtySprite):
                                          line_colors=[Color(72, 127, 255), Color(51, 255, 51)], num_of_graphs=2)
     day_temperatures = TemperatureGraph(width=WIDTH / 4, height=HEIGHT / 10,
                                         line_colors=[Color(72, 127, 255), Color(51, 255, 51)], num_of_graphs=2)
-
+    # creatw a sprite collection
     sprites = LayeredDirty()
     sprites.add(current_weather_icon, hour_grid, days_grid, hour_temperatures, day_temperatures)
 
