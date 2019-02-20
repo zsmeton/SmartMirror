@@ -165,7 +165,7 @@ class WeatherAPI:
 
                 if self.fio.has_daily() is True:
                     daily = FIODaily(self.fio)
-                    if hour_data['time'] < daily.day_1_sunriseTime and hour_data['time'] < daily.day_1_sunsetTime:
+                    if daily.day_1_sunriseTime < hour_data['time'] < daily.day_1_sunsetTime:
                         hour_weather.timeDay = TimeOfDay.NIGHT
                     else:
                         hour_weather.timeDay = TimeOfDay.DAY
@@ -185,7 +185,7 @@ class WeatherAPI:
                           datetime.fromtimestamp(daily.get(daily.day_1_time)))
 
             # get Time of Day for current
-            if time.time() < daily.day_1_sunriseTime and time.time() < daily.day_1_sunsetTime:
+            if daily.day_1_sunriseTime < time.time() < daily.day_1_sunsetTime:
                 current_weather.timeDay = TimeOfDay.NIGHT
             else:
                 current_weather.timeDay = TimeOfDay.DAY
