@@ -31,6 +31,7 @@ class BaseWeather:
         self.timeDay = TimeOfDay.DAY
         self.shape = WeatherShape.SUN
         self.summary = ''
+        self.time = 0
 
     def get(self) -> dict:
         self.uv = self.uv if self.uv < 11 else 11
@@ -64,6 +65,7 @@ class BaseWeather:
             exit(0)
         # set others
         weather['summary'] = self.summary
+        weather['time'] = self.time
 
         return weather
 
@@ -155,6 +157,7 @@ class WeatherAPI:
                 hour_weather.apparentTemperature = hour_data['apparentTemperature']
                 hour_weather.cloudCover = hour_data['cloudCover']
                 hour_weather.uv = hour_data['uvIndex']
+                hour_weather.time = datetime.fromtimestamp(hour_data['time']).strftime('%I %p')
                 try:
                     hour_weather.precipType = hour_data['precipType']
                 except KeyError:
@@ -162,8 +165,7 @@ class WeatherAPI:
 
                 if self.fio.has_daily() is True:
                     daily = FIODaily(self.fio)
-                    if hour_data['time'] < daily.day_1_sunriseTime and hour_data[
-                        'time'] < daily.day_1_sunsetTime:
+                    if hour_data['time'] < daily.day_1_sunriseTime and hour_data['time'] < daily.day_1_sunsetTime:
                         hour_weather.timeDay = TimeOfDay.NIGHT
                     else:
                         hour_weather.timeDay = TimeOfDay.DAY
@@ -179,7 +181,8 @@ class WeatherAPI:
                 try:
                     current_weather.precipType = daily.day_1_precipType
                 except AttributeError:
-                    print('darksky returned no precipType for daily', datetime.fromtimestamp(daily.get(daily.day_1_time)))
+                    print('darksky returned no precipType for daily',
+                          datetime.fromtimestamp(daily.get(daily.day_1_time)))
 
             # get Time of Day for current
             if time.time() < daily.day_1_sunriseTime and time.time() < daily.day_1_sunsetTime:
@@ -199,6 +202,7 @@ class WeatherAPI:
                 day_weather.uv = day_data['uvIndex']
                 day_weather.lowTemperature = day_data['temperatureMin']
                 day_weather.highTemperature = day_data['temperatureMax']
+                day_weather.time = datetime.fromtimestamp(day_data['time']).strftime('%A')
                 try:
                     day_weather.precipType = day_data['precipType']
                 except KeyError:
