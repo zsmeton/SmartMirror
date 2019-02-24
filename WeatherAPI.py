@@ -78,7 +78,7 @@ class SmallWeather(BaseWeather):
 
     def get(self) -> dict:
         weather = super().get()
-        weather['temperature'] = self.temperature
+        weather['value'] = self.temperature
         weather['feels'] = self.apparentTemperature
         return weather
 
@@ -165,7 +165,8 @@ class WeatherAPI:
 
                 if self.fio.has_daily() is True:
                     daily = FIODaily(self.fio)
-                    if daily.day_1_sunriseTime < hour_data['time'] < daily.day_1_sunsetTime:
+                    print(hour_data['time'], daily.day_2_sunsetTime)
+                    if hour_data['time'] > daily.day_2_sunsetTime:
                         hour_weather.timeDay = TimeOfDay.NIGHT
                     else:
                         hour_weather.timeDay = TimeOfDay.DAY
@@ -185,7 +186,8 @@ class WeatherAPI:
                           datetime.fromtimestamp(daily.get(daily.day_1_time)))
 
             # get Time of Day for current
-            if daily.day_1_sunriseTime < time.time() < daily.day_1_sunsetTime:
+            print(time.time(), daily.day_2_sunsetTime)
+            if time.time() > daily.day_2_sunsetTime:
                 current_weather.timeDay = TimeOfDay.NIGHT
             else:
                 current_weather.timeDay = TimeOfDay.DAY

@@ -14,10 +14,14 @@ BACKGROUND_COLOR = Color(0)
 
 
 # EVENT TIMERS
-class EventTimers(Enum):
+class EventTimer(Enum):
     GET_WEATHER = 30000
 
     def get_event(self):
+        """
+        Returns the event integer for the specified EvenTimer
+        :return: pygame event integer
+        """
         events = {self.GET_WEATHER: USEREVENT + 1}
         return events.get(self)
 
@@ -50,15 +54,16 @@ class SmartMirrorApp:
         # Set event timers
         self.set_timers()
         # add events to queue
-        for event in EventTimers:
+        for event in EventTimer:
             my_event = pygame.event.Event(event.get_event())
             pygame.event.post(my_event)
 
-    def set_timers(self):
+    @staticmethod
+    def set_timers():
         """
-        Sets event timers for all members of the EventTimers class
+        Sets event timers for all members of the EventTimer class
         """
-        for event in EventTimers:
+        for event in EventTimer:
             pygame.time.set_timer(event.get_event(), event.value)
 
     def handle_events(self):
@@ -71,7 +76,7 @@ class SmartMirrorApp:
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     self.done = True
-            elif event.type == EventTimers.GET_WEATHER.get_event():
+            elif event.type == EventTimer.GET_WEATHER.get_event():
                 with open(self.weather_file, 'r') as fin:
                     self.weather = json.load(fin, object_hook=weather_hook)
                 self.weather_widget.set_weather(self.weather)
