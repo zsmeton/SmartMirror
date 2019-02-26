@@ -78,7 +78,7 @@ class SmallWeather(BaseWeather):
 
     def get(self) -> dict:
         weather = super().get()
-        weather['value'] = self.temperature
+        weather['temperature'] = self.temperature
         weather['feels'] = self.apparentTemperature
         return weather
 
