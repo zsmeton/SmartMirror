@@ -45,11 +45,7 @@ class SmartMirrorApp:
         # Create Dirty Sprites
         self.weather_widget = WeatherWidget()
 
-        # Create Layered Dirty
-        self.my_sprites = LayeredDirty()
-        # Can Add Spites to LayeredDirty using:
-        self.my_sprites.add(self.weather_widget)
-        self.my_sprites.clear(self.screen, self.background)
+        self.weather_widget.clear(self.screen, self.background)
 
         # Set event timers
         self.set_timers()
@@ -79,6 +75,7 @@ class SmartMirrorApp:
             elif event.type == EventTimer.GET_WEATHER.get_event():
                 with open(self.weather_file, 'r') as fin:
                     self.weather = json.load(fin, object_hook=weather_hook)
+                    print("Re-pulling weather data")
                 self.weather_widget.set_weather(self.weather)
 
     def loop(self):
@@ -89,13 +86,15 @@ class SmartMirrorApp:
             self.handle_events()
 
             # Update spites
-            self.my_sprites.update()
-            rects = self.my_sprites.draw(self.screen)
+            self.weather_widget.update()
+
+            rects = self.weather_widget.draw(self.screen)
+            pygame.display.update(rects)
             # draw non sprites
 
             # draw display
             self.clock.tick(MAX_FRAME_RATE)
-            pygame.display.update(rects)
+        pygame.quit()
 
 
 if __name__ == "__main__":

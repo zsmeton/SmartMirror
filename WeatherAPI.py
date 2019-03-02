@@ -114,6 +114,7 @@ class WeatherAPI:
             self.fio = ForecastIO.ForecastIO('58bd3b25da2aae9c321d6f35183c2a8d', units=ForecastIO.ForecastIO.UNITS_US,
                                              lang=ForecastIO.ForecastIO.LANG_ENGLISH, latitude=self.location['lat'],
                                              longitude=self.location['lon'])
+            print("Updating Weather information")
             # Write updated data to a file using json
             with open(self.writeFile, 'w') as fout:
                 out = self.get_weather()
@@ -165,7 +166,6 @@ class WeatherAPI:
 
                 if self.fio.has_daily() is True:
                     daily = FIODaily(self.fio)
-                    print(hour_data['time'], daily.day_2_sunsetTime)
                     if hour_data['time'] > daily.day_2_sunsetTime:
                         hour_weather.timeDay = TimeOfDay.NIGHT
                     else:
@@ -183,10 +183,9 @@ class WeatherAPI:
                     current_weather.precipType = daily.day_1_precipType
                 except AttributeError:
                     print('darksky returned no precipType for daily',
-                          datetime.fromtimestamp(daily.get(daily.day_1_time)))
+                          datetime.fromtimestamp(daily.day_1_time))
 
             # get Time of Day for current
-            print(time.time(), daily.day_2_sunsetTime)
             if time.time() > daily.day_2_sunsetTime:
                 current_weather.timeDay = TimeOfDay.NIGHT
             else:
