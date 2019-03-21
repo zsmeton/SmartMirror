@@ -1,7 +1,7 @@
 import math
 
 import pygame
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFont
 from pygame import Color, draw, gfxdraw
 from pygame.sprite import DirtySprite, LayeredDirty
 
@@ -13,6 +13,21 @@ pygame.font.init()
 
 # Constants
 FILL_TO_ANGLE = 360
+TEXT_SIZES = {6, 7, 8, 9, 10, 11, 12, 14, 15, 16, 17, 18, 20, 24, 26, 27, 28, 29, 30, 32, 34, 36}
+
+
+def get_text_size(proposed_size):
+    if proposed_size in TEXT_SIZES:
+        return proposed_size
+    else:
+        closest = None
+        for i in range(-5, 6):
+            if proposed_size + i in TEXT_SIZES:
+                if closest is None:
+                    closest = proposed_size + i
+                elif abs(i) < abs(proposed_size - closest):
+                    closest = proposed_size + i
+        return closest
 
 
 def grouped(iterable, n):
@@ -115,7 +130,7 @@ def get_aalines_surface(surface: pygame.Surface, points: list, thickness, color)
 class WeatherIcon(DirtySprite):
     def __init__(self, *groups, **kwargs):
         super().__init__(groups)
-        self.fill_color = (51, 255, 255)
+        self.fill_color = (255, 255, 255)
         self.unfilled_color = Color(100, 100, 100)
         self.shape_file_name = ""
         self.starting_angle = 0
@@ -204,6 +219,9 @@ class WeatherIcon(DirtySprite):
         :param unit:
         :return:
         """
+        AA_SCALING = 3
+        PADDING = 1.15
+
         string = str()
         try:
             string = "%d%s" % (int(round(float(value))), unit)
@@ -214,11 +232,25 @@ class WeatherIcon(DirtySprite):
             return pygame.Surface([1, 1]), pygame.Rect([(1, 1), (1, 1)])
 
         str_length_scaling = len(string) / 3
-        font = pygame.font.SysFont('arial', int(
-            round((self.size - self.padding) // (scale * str_length_scaling * self.text_ratio))))
+        text_size = AA_SCALING * get_text_size(
+            round((self.size - self.padding) // (scale * str_length_scaling * self.text_ratio)))
+        font = pygame.font.SysFont('arial', text_size)
         textsurface = font.render(string, True, self.text_color)
         textsurface_rect = textsurface.get_rect()
-        return textsurface, textsurface_rect
+
+        fnt = ImageFont.truetype('Pillow/Tests/fonts/arial.ttf', text_size)
+        # create a pie image filled to the percentage
+        pil_image = Image.new("RGBA",
+                              (round(PADDING * textsurface_rect.width), round(PADDING * textsurface_rect.height)))
+        pil_draw = ImageDraw.Draw(pil_image)
+        pil_draw.text((0, 0), string, font=fnt, fill=(255, 255, 255))
+        # make 3 times smaller for AA like look
+        pil_image = pil_image.resize((textsurface_rect.width // AA_SCALING, textsurface_rect.height // AA_SCALING),
+                                     Image.ANTIALIAS)
+        # convert pie image into PyGame image
+        py_image = pil_to_pygame_image(pil_image)
+        py_image_rect = py_image.get_rect()
+        return py_image, py_image_rect
 
     def update(self):
         """
@@ -246,7 +278,7 @@ class WeatherIcon(DirtySprite):
             py_image_rect = py_image.get_rect(center=self.image.get_rect().center)
 
             # create the icon image
-            pil_icon_image = Image.open(self.shape_file_name)
+            pil_icon_image = Image.open(self.shape.shape_to_image())
             pil_icon_image = pil_icon_image.resize(self.icon_rect.size, Image.ANTIALIAS)
             icon_image = pil_to_pygame_image(pil_icon_image)
             icon_image_rect = icon_image.get_rect(center=self.image.get_rect().center)
@@ -312,13 +344,20 @@ class SpriteGrid(DirtySprite):
             self.rect.center = (x, y)
             self.dirty = 1
 
-    def replace_icons(self, *args):
+    def replace_icons(self, array=None, *args):
         """
         Removes all old icons then adds the sprites listed in args
 
-        :param args:
+        :param array: a list of sprites to replace the current icons
+        :param args: a place to individually add sprites which will be used to replace the sprites
         """
+        # Clear the current list
         self.sprites = []
+        # add sprite from list
+        if array is not None:
+            for sprite in array:
+                self.sprites.append(sprite)
+        # add sprites from args
         for sprite in args:
             self.sprites.append(sprite)
         self.dirty = 1
@@ -530,7 +569,7 @@ class TemperatureGraph(DirtySprite):
                 self._draw_lines(max_temp, min_temp, temp_x_spacing, self.temperatures, self.line_colors)
 
 
-class WeatherWidget(LayeredDirty):
+  class WeatherWidget(LayeredDirty):
     def __init__(self):
         self.center = 0.85
         # Create Widgets Dirty Sprites
@@ -568,55 +607,37 @@ class WeatherWidget(LayeredDirty):
                                                        bottom_left_value=f"Feel: {round(weather_dict['current']['feels'])}°",
                                                        bottom_left_scale=.5)
 
-        # Hour Grid populate or update
-        if len(self.hour_grid.sprites) == 0:
-            labels = []
-            for i in range(0, 5):
-                self.hour_grid.add_icon(
-                    WeatherIcon().set_icon_information(shape=weather_dict['hourly'][i]['shape'],
-                                                       fill=weather_dict['hourly'][i]['fill%'],
-                                                       center_value=weather_dict['hourly'][i]['temperature'],
-                                                       center_unit="°",
-                                                       top_right_value=weather_dict['hourly'][i]['value'],
-                                                       top_right_unit=weather_dict['hourly'][i]['unit']))
-                labels.append(weather_dict['hourly'][i]['time'])
-            self.hour_grid.labels = labels
-        else:
-            labels = []
-            for i, sprite in enumerate(self.hour_grid.sprites):
-                sprite.set_icon_information(shape=weather_dict['hourly'][i]['shape'],
-                                            fill=weather_dict['hourly'][i]['fill%'],
-                                            center_value=weather_dict['hourly'][i]['temperature'],
-                                            center_unit="°",
-                                            top_right_value=weather_dict['hourly'][i]['value'],
-                                            top_right_unit=weather_dict['hourly'][i]['unit'])
-                labels.append(weather_dict['hourly'][i]['time'])
-            self.hour_grid.labels = labels
+        # Update the Hour Grid
+        hour_labels = []
+        hour_icons = []
+        for i in range(5):
+            hour_icons.append(
+                WeatherIcon().set_icon_information(shape=weather_dict['hourly'][i]['shape'],
+                                                   fill=weather_dict['hourly'][i]['fill%'],
+                                                   center_value=weather_dict['hourly'][i]['temperature'],
+                                                   center_unit="°",
+                                                   top_right_value=weather_dict['hourly'][i]['value'],
+                                                   top_right_unit=weather_dict['hourly'][i]['unit']))
+            hour_labels.append(weather_dict['hourly'][i]['time'])
+        self.hour_grid.replace_icons(hour_icons)
+        self.hour_grid.labels = hour_labels
 
-        print("Hour:", id(self.hour_grid), len(self.hour_grid.sprites))
-        print("Days:", id(self.days_grid), len(self.days_grid.sprites))
-        # Days Grid populate or update
-        if len(self.days_grid.sprites) == 0:
-            labels = []
-            for i in range(0, 6):
-                self.days_grid.add_icon(WeatherIcon().set_icon_information(shape=weather_dict['forecast'][i]['shape'],
-                                                                           fill=weather_dict['forecast'][i]['fill%'],
-                                                                           center_value=weather_dict['forecast'][i][
-                                                                               'value'],
-                                                                           center_unit=weather_dict['forecast'][i][
-                                                                               'unit']))
-                labels.append(weather_dict['forecast'][i]['time'])
-            self.days_grid.labels = labels
-        else:
-            labels = []
-            for i, sprite in enumerate(self.days_grid.sprites):
-                sprite.set_icon_information(shape=weather_dict['forecast'][i]['shape'],
-                                            fill=weather_dict['forecast'][i]['fill%'],
-                                            center_value=weather_dict['forecast'][i]['value'],
-                                            center_unit=weather_dict['forecast'][i]['unit'])
-                labels.append(weather_dict['forecast'][i]['time'])
-            self.days_grid.labels = labels
+        # Update the Day Grid
+        day_labels = []
+        day_icons = []
+        for i in range(6):
+            day_icons.append(WeatherIcon().set_icon_information(shape=weather_dict['forecast'][i]['shape'],
+                                                                fill=weather_dict['forecast'][i]['fill%'],
+                                                                center_value=weather_dict['forecast'][i][
+                                                                    'value'],
+                                                                center_unit=weather_dict['forecast'][i][
+                                                                    'unit']))
+            day_labels.append(weather_dict['forecast'][i]['time'])
+        self.days_grid.replace_icons(day_icons)
+        self.days_grid.labels = day_labels
 
+        # Update the Day Temperatures Graph
+        # TODO: Refactor for easier editing/readability
         self.day_temperatures.set_temperatures([weather_dict['forecast'][0]['highTemperature'],
                                                 weather_dict['forecast'][1]['highTemperature'],
                                                 weather_dict['forecast'][2]['highTemperature'],
@@ -629,9 +650,6 @@ class WeatherWidget(LayeredDirty):
                                                 weather_dict['forecast'][3]['lowTemperature'],
                                                 weather_dict['forecast'][4]['lowTemperature'],
                                                 weather_dict['forecast'][5]['lowTemperature']])
-
-        print("Hour:", id(self.hour_grid), len(self.hour_grid.sprites))
-        print("Days:", id(self.days_grid), len(self.days_grid.sprites))
 
 
 if __name__ == "__main__":
