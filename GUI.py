@@ -569,7 +569,7 @@ class TemperatureGraph(DirtySprite):
                 self._draw_lines(max_temp, min_temp, temp_x_spacing, self.temperatures, self.line_colors)
 
 
-  class WeatherWidget(LayeredDirty):
+class WeatherWidget(LayeredDirty):
     def __init__(self):
         self.center = 0.85
         # Create Widgets Dirty Sprites
