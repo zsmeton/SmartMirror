@@ -3,12 +3,11 @@ from enum import Enum
 
 import pygame
 from pygame import Surface, Color, USEREVENT
-from pygame.sprite import LayeredDirty
 
+from Display import WIDTH, HEIGHT, MAX_FRAME_RATE
 # CONSTANTS
 from GUI import WeatherWidget
 from WeatherJSON import weather_hook
-from Display import WIDTH, HEIGHT, MAX_FRAME_RATE
 
 BACKGROUND_COLOR = Color(0)
 
@@ -40,7 +39,7 @@ class SmartMirrorApp:
 
         # Create Background Surface
         self.background = Surface(self.screen.get_size())
-        Surface.fill(self.background, BACKGROUND_COLOR)
+        self.background.fill(BACKGROUND_COLOR)
 
         # Create Dirty Sprites
         self.weather_widget = WeatherWidget()
@@ -73,10 +72,15 @@ class SmartMirrorApp:
                 if event.key == pygame.K_ESCAPE:
                     self.done = True
             elif event.type == EventTimer.GET_WEATHER.get_event():
+                self.background.fill(BACKGROUND_COLOR)
+                self.weather_widget.clear(self.screen, self.background)
+                self.weather_widget = WeatherWidget()
+                self.weather_widget.clear(self.screen, self.background)
                 with open(self.weather_file, 'r') as fin:
                     self.weather = json.load(fin, object_hook=weather_hook)
                     print("Re-pulling weather data")
                 self.weather_widget.set_weather(self.weather)
+                self.weather_widget.update()
 
     def loop(self):
         """

@@ -1,5 +1,4 @@
 import math
-
 import pygame
 from PIL import Image, ImageDraw, ImageFont
 from pygame import Color, draw, gfxdraw
@@ -128,9 +127,10 @@ def get_aalines_surface(surface: pygame.Surface, points: list, thickness, color)
 
 
 class WeatherIcon(DirtySprite):
+    FONT = 'Pillow/Tests/fonts/arial.ttf'
     def __init__(self, *groups, **kwargs):
         super().__init__(groups)
-        self.fill_color = (255, 255, 255)
+        self.fill_color = (102, 255, 255)
         self.unfilled_color = Color(100, 100, 100)
         self.shape_file_name = ""
         self.starting_angle = 0
@@ -161,6 +161,7 @@ class WeatherIcon(DirtySprite):
         self.rect = self.image.get_rect()
         self.icon_rect = self.rect.inflate(-self.padding, -self.padding)
         self.image.fill(self.unfilled_color, self.icon_rect)
+
 
     def set_icon(self, shape: WeatherShape, fill: float):
         """
@@ -238,7 +239,7 @@ class WeatherIcon(DirtySprite):
         textsurface = font.render(string, True, self.text_color)
         textsurface_rect = textsurface.get_rect()
 
-        fnt = ImageFont.truetype('Pillow/Tests/fonts/arial.ttf', text_size)
+        fnt = ImageFont.truetype(self.FONT, text_size)
         # create a pie image filled to the percentage
         pil_image = Image.new("RGBA",
                               (round(PADDING * textsurface_rect.width), round(PADDING * textsurface_rect.height)))
