@@ -38,6 +38,15 @@ class WeatherParser:
                 return None
 
 
+
+
+def line_prepender(filename, line):
+    with open(filename, 'r+') as f:
+        content = f.read()
+        f.seek(0, 0)
+        f.write(line.rstrip('\r\n') + '\n' + content)
+
+
 def parse_string(line):
     if "mirror" in line:
         weather_result = weather_parser.parse(line)
@@ -48,17 +57,11 @@ def parse_string(line):
         return False
 
 
-def line_prepender(filename, line):
-    with open(filename, 'r+') as f:
-        content = f.read()
-        f.seek(0, 0)
-        f.write(line.rstrip('\r\n') + '\n' + content)
-
-
 if __name__ == "__main__":
     file_name = "microphone.txt"
     activation_string = "mirror"
     delay = 10
+    sentence_lookahead = 2
     weather_parser = WeatherParser()
     # face_recognition_parser = ()
     while True:
@@ -71,8 +74,8 @@ if __name__ == "__main__":
             # is the activation word in the string attempt to parse the string
             if activation_string in line and not parse_string(line):
                 # if the line had the activation but was not parseable try current and next line
-                if i < len(lines) - 1:
-                    parse_string(line + " " + lines[i + 1])
+                if i < len(lines) - sentence_lookahead:
+                    parse_string(line + " " + lines[i + sentence_lookahead])
                 # if a theoretically parseable string is at end of file write that line to the file
                 else:
                     # if file is empty overwrite with line
