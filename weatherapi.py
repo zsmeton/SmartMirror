@@ -18,7 +18,7 @@ from forecastiopy.FIOHourly import FIOHourly
 # Free up to 1000 requests per day
 
 RAIN_SNOW_THRESHOLD = 0.10
-CLOUD_COVER_THRESHOLD = 0.2
+CLOUD_COVER_THRESHOLD = 0.3
 WEATHER_UPDATE_TIME = 110
 
 
@@ -61,8 +61,8 @@ class BaseWeather:
         elif self.timeDay == TimeOfDay.NIGHT:
             weather['shape'] = WeatherShape.MOON
             weather['fill%'] = self.moonPhase
-            weather['value'] = "%"
-            weather['unit'] = f"{self.moonPhase*100}"
+            weather['value'] = f"{self.moonPhase*100}"
+            weather['unit'] = "%"
         else:
             print('Unknown shape')
             exit(0)
@@ -170,6 +170,7 @@ class WeatherAPI:
                 if daily is not None:
                     if hour_data['time'] > daily.day_2_sunsetTime:
                         hour_weather.timeDay = TimeOfDay.NIGHT
+                        hour_weather.moonPhase = daily.day_2_moonPhase
                     else:
                         hour_weather.timeDay = TimeOfDay.DAY
 
@@ -267,8 +268,8 @@ class WeatherAPI:
         self.hourly_weather = self.update_hourly_weather()
         self.forecast_weather = self.update_daily_weather()
 
-        print(self.current_weather.summary, self.week_summary, self.forecast_weather[0].summary,
-              self.hourly_weather[0].summary, sep='\n')
+        # print(self.current_weather.summary, self.week_summary, self.forecast_weather[0].summary,
+        # self.hourly_weather[0].summary, sep='\n')
 
         hourly_data = []
         for hour in self.hourly_weather:
@@ -276,7 +277,8 @@ class WeatherAPI:
         forecast_data = []
         for day in self.forecast_weather:
             forecast_data.append(day.get())
-        return {'current': self.current_weather.get(), 'hourly': hourly_data, 'forecast': forecast_data}
+        return {'current': self.current_weather.get(), 'hourly': hourly_data, 'forecast': forecast_data,
+                'week_summary': self.week_summary}
 
     def _correct_grammar(self, string_a, string_b, input, switch):
         """

@@ -1,4 +1,5 @@
 import math
+
 import pygame
 from PIL import Image, ImageDraw, ImageFont
 from pygame import Color, draw, gfxdraw
@@ -444,7 +445,7 @@ class TemperatureGraph(DirtySprite):
         super().__init__()
         self.num_of_graphs = 1
         self.temperatures = []
-        self.background_color = Color(0, 0, 0, 0)
+        self.background_color = Color(0, 0, 0, 255)
         self.line_colors = Color(255, 255, 255)
         self.dot_color = Color(0)
         self.width = 100
@@ -579,7 +580,8 @@ class WeatherWidget(LayeredDirty):
         self.hour_grid = SpriteGrid(width=WIDTH // 4, padding=round(WIDTH / 400), height_padding=round(WIDTH / 150))
         self.days_grid = SpriteGrid(width=WIDTH // 4, padding=round(WIDTH / 400), height_padding=round(WIDTH / 150))
         self.day_temperatures = TemperatureGraph(width=WIDTH // 4, height=HEIGHT // 10,
-                                                 line_colors=[Color(72, 127, 255), Color(51, 255, 51)], num_of_graphs=2)
+                                                 line_colors=[self.current_weather_icon.fill_color,
+                                                              self.current_weather_icon.text_color], num_of_graphs=2)
 
         super().__init__((self.current_weather_icon, self.hour_grid, self.days_grid, self.day_temperatures))
         # set icon locations

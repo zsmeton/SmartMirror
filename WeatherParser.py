@@ -23,21 +23,26 @@ class WeatherParser:
     # The word that must be in the string for weather parser to parse
     weather_file = "weather.txt"
     activation_string = "weather"
-    current_weather_strings = ["current", "outside", "right", "now", "currently", "today", "look", "like"]
+    current_weather_strings = ["current", "outside", "now", "current", "today"]
+    tomorrow_weather_strings = ["tomorrow", "a day", "one"]
+    week_weather_strings = ["week", "weekend"]
 
     def __init__(self):
         super().__init__()
 
     def parse(self, string: str):
+        TOLERANCE = 1
         if self.activation_string in string.lower():
-            if count(self.current_weather_strings, string) >= 1:
-                with open(self.weather_file, 'r') as fin:
-                    weather = json.load(fin, object_hook=weather_hook)
-                    return weather['current']['summary']
+            with open(self.weather_file, 'r') as fin:
+                weather = json.load(fin, object_hook=weather_hook)
+            if count(self.current_weather_strings, string) >= TOLERANCE:
+                return weather['current']['summary']
+            elif count(self.tomorrow_weather_strings, string) >= TOLERANCE:
+                return weather['forecast'][0]['summary']
+            elif count(self.week_weather_strings, string) >= TOLERANCE:
+                return weather['week_summary']
             else:
                 return None
-
-
 
 
 def line_prepender(filename, line):
@@ -61,7 +66,7 @@ if __name__ == "__main__":
     file_name = "microphone.txt"
     activation_string = "mirror"
     delay = 10
-    sentence_lookahead = 2
+    sentence_lookahead = 1
     weather_parser = WeatherParser()
     # face_recognition_parser = ()
     while True:
@@ -75,7 +80,9 @@ if __name__ == "__main__":
             if activation_string in line and not parse_string(line):
                 # if the line had the activation but was not parseable try current and next line
                 if i < len(lines) - sentence_lookahead:
-                    parse_string(line + " " + lines[i + sentence_lookahead])
+                    for j in range(1, sentence_lookahead + 1):
+                        line += " " + lines[i + j]
+                    parse_string(line)
                 # if a theoretically parseable string is at end of file write that line to the file
                 else:
                     # if file is empty overwrite with line
@@ -84,4 +91,4 @@ if __name__ == "__main__":
                             fout.write(line)
                     else:
                         line_prepender(file_name, line)
-        time.sleep(10)
+        time.sleep(delay)
