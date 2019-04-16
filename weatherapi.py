@@ -2,6 +2,7 @@ import json
 import time
 from datetime import datetime
 
+from FileSettings import WEATHER_FILE
 from TimeOfDay import TimeOfDay
 from WeatherJSON import WeatherEncoder
 from WeatherShape import WeatherShape
@@ -21,8 +22,6 @@ RAIN_SNOW_THRESHOLD = 0.10
 CLOUD_COVER_THRESHOLD = 0.3
 WEATHER_UPDATE_TIME = 110
 
-
-# TODO: Moons are showing up as suns...
 
 class BaseWeather:
     def __init__(self):
@@ -321,7 +320,7 @@ if __name__ == "__main__":
     # Tuple to hold the current location
     current_location = {'lat': 39.7555, 'lon': -105.2211}
     # Create OWM instance using my api key
-    golden_weather = WeatherAPI(current_location, writeFile='weather.txt')
+    golden_weather = WeatherAPI(current_location, writeFile=WEATHER_FILE)
 
     while True:
         golden_weather.update()

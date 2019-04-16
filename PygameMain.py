@@ -5,12 +5,12 @@ import pygame
 from pygame import Surface, Color, USEREVENT
 
 from Display import WIDTH, HEIGHT, MAX_FRAME_RATE
-# CONSTANTS
+from FileSettings import WEATHER_FILE
 from GUI import WeatherWidget
 from WeatherJSON import weather_hook
 
+# CONSTANTS
 BACKGROUND_COLOR = Color(0)
-
 
 # EVENT TIMERS
 class EventTimer(Enum):
@@ -26,7 +26,7 @@ class EventTimer(Enum):
 
 
 class SmartMirrorApp:
-    weather_file = "weather.txt"
+    weather_file = WEATHER_FILE
     weather = None
     widgets = []
     # creates a clock

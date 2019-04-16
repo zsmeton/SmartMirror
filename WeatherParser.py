@@ -2,6 +2,7 @@ import json
 import os
 import time
 
+from FileSettings import INPUT_STRING_FILE, OUTPUT_STRING_FILE, WEATHER_FILE
 from WeatherJSON import weather_hook
 
 
@@ -21,7 +22,7 @@ def count(words: list, string: str) -> int:
 
 class WeatherParser:
     # The word that must be in the string for weather parser to parse
-    weather_file = "weather.txt"
+    weather_file = WEATHER_FILE
     activation_string = "weather"
     current_weather_strings = ["current", "outside", "now", "current", "today"]
     tomorrow_weather_strings = ["tomorrow", "a day", "one"]
@@ -53,17 +54,16 @@ def line_prepender(filename, line):
 
 
 def parse_string(line):
-    if "mirror" in line:
-        weather_result = weather_parser.parse(line)
-        if weather_result is not None:
-            with open("say.txt", "a") as fout:
-                fout.write(weather_result + "\n")
-                return True
-        return False
+    weather_result = weather_parser.parse(line)
+    if weather_result is not None:
+        with open(OUTPUT_STRING_FILE, "a") as fout:
+            fout.write(weather_result + "\n")
+            return True
+    return False
 
 
 if __name__ == "__main__":
-    file_name = "microphone.txt"
+    file_name = INPUT_STRING_FILE
     activation_string = "mirror"
     delay = 10
     sentence_lookahead = 1
