@@ -128,9 +128,10 @@ def get_aalines_surface(surface: pygame.Surface, points: list, thickness, color)
 
 
 class WeatherIcon(DirtySprite):
+    FONT = 'Pillow/Tests/fonts/arial.ttf'
     def __init__(self, *groups, **kwargs):
         super().__init__(groups)
-        self.fill_color = (255, 255, 255)
+        self.fill_color = (102, 255, 255)
         self.unfilled_color = Color(100, 100, 100)
         self.shape_file_name = ""
         self.starting_angle = 0
@@ -161,6 +162,7 @@ class WeatherIcon(DirtySprite):
         self.rect = self.image.get_rect()
         self.icon_rect = self.rect.inflate(-self.padding, -self.padding)
         self.image.fill(self.unfilled_color, self.icon_rect)
+
 
     def set_icon(self, shape: WeatherShape, fill: float):
         """
@@ -238,7 +240,7 @@ class WeatherIcon(DirtySprite):
         textsurface = font.render(string, True, self.text_color)
         textsurface_rect = textsurface.get_rect()
 
-        fnt = ImageFont.truetype('Pillow/Tests/fonts/arial.ttf', text_size)
+        fnt = ImageFont.truetype(self.FONT, text_size)
         # create a pie image filled to the percentage
         pil_image = Image.new("RGBA",
                               (round(PADDING * textsurface_rect.width), round(PADDING * textsurface_rect.height)))
@@ -443,7 +445,7 @@ class TemperatureGraph(DirtySprite):
         super().__init__()
         self.num_of_graphs = 1
         self.temperatures = []
-        self.background_color = Color(0, 0, 0, 0)
+        self.background_color = Color(0, 0, 0, 255)
         self.line_colors = Color(255, 255, 255)
         self.dot_color = Color(0)
         self.width = 100
@@ -569,7 +571,7 @@ class TemperatureGraph(DirtySprite):
                 self._draw_lines(max_temp, min_temp, temp_x_spacing, self.temperatures, self.line_colors)
 
 
-  class WeatherWidget(LayeredDirty):
+class WeatherWidget(LayeredDirty):
     def __init__(self):
         self.center = 0.85
         # Create Widgets Dirty Sprites
@@ -578,7 +580,8 @@ class TemperatureGraph(DirtySprite):
         self.hour_grid = SpriteGrid(width=WIDTH // 4, padding=round(WIDTH / 400), height_padding=round(WIDTH / 150))
         self.days_grid = SpriteGrid(width=WIDTH // 4, padding=round(WIDTH / 400), height_padding=round(WIDTH / 150))
         self.day_temperatures = TemperatureGraph(width=WIDTH // 4, height=HEIGHT // 10,
-                                                 line_colors=[Color(72, 127, 255), Color(51, 255, 51)], num_of_graphs=2)
+                                                 line_colors=[self.current_weather_icon.fill_color,
+                                                              self.current_weather_icon.text_color], num_of_graphs=2)
 
         super().__init__((self.current_weather_icon, self.hour_grid, self.days_grid, self.day_temperatures))
         # set icon locations

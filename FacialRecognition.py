@@ -1,10 +1,22 @@
-from multiprocessing import Queue
 import codecs
 import json
 import os
 
 import face_recognition
 import numpy as np
+import picamera
+import time
+from FileSettings import OUTPUT_STRING_FILE, CAMERA_OUTPUT_FILE
+import codecs
+import json
+import os
+import time
+
+import face_recognition
+import numpy as np
+import picamera
+
+from FileSettings import OUTPUT_STRING_FILE, CAMERA_OUTPUT_FILE
 
 
 # turn numpy array into a json dumpable form
@@ -120,22 +132,47 @@ class FaceRecognizer:
             else:
                 self.looking = False
 
-    def update(self, unknown_file_name: str, queue: Queue):
+    def update(self, unknown_file_name: str):
         """
             Runs who_is_it() and are_they_looking, which will update
             self.who and self.looking
-
-            :param queue:
             :param unknown_file_name: path to image of person
         """
         self.are_they_looking(unknown_file_name)
         self.who_is_it(unknown_file_name)
-        queue.put(self.who)
-        queue.put(self.looking)
 
 
 if __name__ == "__main__":
+    SAY_HELLO_TIMER = 60  # seconds since last recogntion before removing them
+    SLEEP = 0.25  # Seconds between photo
+    # Take a photo every second and if the user is identified ask the mirror to say hello to the user
+    last_run = time.time()
+    users = {}  # hold the user and their last recognition time
+    camera = picamera.PiCamera()
     rec = FaceRecognizer(enc_location='known_faces', name_conv_location='pictureNames.conv')
-    rec.update('unknown.png')
-    print(rec.who)
-    print(rec.looking)
+    try:
+        while True:
+            # Wait until sleep timer is done
+            while time.time() < last_run + SLEEP:
+                time.sleep(SLEEP / 10)
+            last_run = time.time()  # Update the last run timer
+            # Take a picture and run recogntion
+            camera.capture(CAMERA_OUTPUT_FILE)
+            rec.update(CAMERA_OUTPUT_FILE)
+            # Say hello if new user recognition
+            if rec.who not in users:
+                users[rec.who] = time.time()
+                with open(OUTPUT_STRING_FILE, "a") as fout:
+                    fout.write(f'Hello {rec.who}')
+            # Update last seen timer if recognized again
+            else:
+                users[rec.who] = time.time()
+            # Remove old users
+            for key, value in users.items():
+                if value > time.time() + SAY_HELLO_TIMER:
+                    del users[key]
+
+    except KeyboardInterrupt:
+        camera.close()
+    finally:
+        camera.close()
