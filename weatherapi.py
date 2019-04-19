@@ -167,9 +167,10 @@ class WeatherAPI:
 
                 # use sunset information to set the hours time of day
                 if daily is not None:
-                    if hour_data['time'] > daily.data[0]['sunsetTime'] and daily.data[0]['sunriseTime'] or hour_data[
-                        'time'] < \
-                            daily.data[0]['sunsetTime'] and daily.data[0]['sunriseTime']:
+                    if (hour_data['time'] > daily.data[0]['sunsetTime'] and hour_data['time'] > daily.data[0][
+                        'sunriseTime']) or (
+                            hour_data['time'] < daily.data[0]['sunsetTime'] and hour_data['time'] < daily.data[0][
+                        'sunriseTime']):
                         hour_weather.timeDay = TimeOfDay.NIGHT
                         hour_weather.moonPhase = daily.data[0]['moonPhase']
                     else:
@@ -251,8 +252,8 @@ class WeatherAPI:
                         print('darksky returned no precipType for daily',
                               datetime.fromtimestamp(daily.data[0]['time']))
                 # get Time of Day for current
-                if currently.time > daily.data[0]['sunsetTime'] and daily.data[0]['sunriseTime'] or currently.time < \
-                        daily.data[0]['sunsetTime'] and daily.data[0]['sunriseTime']:
+                if (currently.time > daily.data[0]['sunsetTime'] and currently.time > daily.data[0]['sunriseTime']) or (
+                        currently.time < daily.data[0]['sunsetTime'] and currently.time < daily.data[0]['sunriseTime']):
                     self.current_weather.timeDay = TimeOfDay.NIGHT
                     self.current_weather.moonPhase = daily.data[0]['moonPhase']
                 else:
