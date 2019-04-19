@@ -1,15 +1,6 @@
 import codecs
 import json
 import os
-
-import face_recognition
-import numpy as np
-import picamera
-import time
-from FileSettings import OUTPUT_STRING_FILE, CAMERA_OUTPUT_FILE
-import codecs
-import json
-import os
 import time
 
 import face_recognition
