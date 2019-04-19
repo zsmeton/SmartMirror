@@ -1,4 +1,6 @@
 import math
+import time
+from datetime import datetime
 
 import pygame
 from PIL import Image, ImageDraw, ImageFont
@@ -15,6 +17,7 @@ pygame.font.init()
 FILL_TO_ANGLE = 360
 TEXT_SIZES = {6, 7, 8, 9, 10, 11, 12, 14, 15, 16, 17, 18, 20, 24, 26, 27, 28, 29, 30, 32, 34, 36}
 FONT = 'Pillow/Tests/fonts/arial.ttf'
+
 
 def get_text_size(proposed_size):
     if proposed_size in TEXT_SIZES:
@@ -129,6 +132,7 @@ def get_aalines_surface(surface: pygame.Surface, points: list, thickness, color)
 
 class WeatherIcon(DirtySprite):
     FONT = 'Pillow/Tests/fonts/arial.ttf'
+
     def __init__(self, *groups, **kwargs):
         super().__init__(groups)
         self.fill_color = (102, 255, 255)
@@ -162,7 +166,6 @@ class WeatherIcon(DirtySprite):
         self.rect = self.image.get_rect()
         self.icon_rect = self.rect.inflate(-self.padding, -self.padding)
         self.image.fill(self.unfilled_color, self.icon_rect)
-
 
     def set_icon(self, shape: WeatherShape, fill: float):
         """
@@ -338,7 +341,6 @@ class SpriteGrid(DirtySprite):
         self.__dict__.update(kwargs)
         self.grid_width = 0
 
-
     def move(self, x: int = 0, y: int = 0):
         """
         Moves the WeatherIcon center to the x amd y pos, x and y default to 0
@@ -474,7 +476,7 @@ class SpriteGrid(DirtySprite):
                         continue
                     textsurface, textsurface_rect = self._return_text(self.labels[i], self.text_scale)
                     textsurface_rect.centerx = round((i + .5) * self.grid_width + (i + .5) * (
-                                1 + 1 / (len(self.sprites) - 1)) * self.padding)  # round((i + .5) * self.spacing)
+                            1 + 1 / (len(self.sprites) - 1)) * self.padding)  # round((i + .5) * self.spacing)
                     textsurface_rect.centery = self.height_padding // 2
                     self.image.blit(textsurface, textsurface_rect)
 
@@ -626,12 +628,16 @@ class WeatherWidget(LayeredDirty):
                                                  line_colors=[self.current_weather_icon.fill_color,
                                                               self.current_weather_icon.text_color], num_of_graphs=2)
 
-        super().__init__((self.current_weather_icon, self.hour_grid, self.days_grid, self.day_temperatures))
+        self.clock_widget = ClockWidget(width=round(sizing_small / 4), height=round(sizing_large / 20))
+
+        super().__init__(
+            (self.current_weather_icon, self.hour_grid, self.days_grid, self.day_temperatures, self.clock_widget))
         # set icon locations
         self.current_weather_icon.move(int(self.center * WIDTH), int(0.05 * HEIGHT))
         self.hour_grid.move(int(self.center * WIDTH), int(0.12 * HEIGHT))
         self.days_grid.move(int(self.center * WIDTH), int(0.18 * HEIGHT))
         self.day_temperatures.move(int(self.center * WIDTH), int(0.24 * HEIGHT))
+        self.clock_widget.move(int(WIDTH / 7), int(0.04 * HEIGHT))
 
         # create object surface and rectangle
         self.image = pygame.Surface([WIDTH, HEIGHT])
@@ -695,6 +701,80 @@ class WeatherWidget(LayeredDirty):
                                                 weather_dict['forecast'][3]['lowTemperature'],
                                                 weather_dict['forecast'][4]['lowTemperature'],
                                                 weather_dict['forecast'][5]['lowTemperature']])
+
+
+class ClockWidget(DirtySprite):
+    def __init__(self, **kwargs):
+        super().__init__()
+        self.time = datetime.fromtimestamp(time.time()).strftime('%I:%M %p')
+        self.date = datetime.fromtimestamp(time.time()).strftime('%A, %b %d')
+        self.background_color = Color(0)
+        self.width = 100
+        self.height = 100
+        self.image = pygame.Surface([self.width, self.height], pygame.SRCALPHA)
+        self.image.fill(self.background_color)
+        self.rect = self.image.get_rect()
+        self.text_color = Color(255, 255, 255)
+        self.time_font_size = 100
+        self.date_font_size = 100
+        self.__dict__.update(kwargs)
+        self.dirty = 1
+
+    def move(self, x: int = 0, y: int = 0):
+        """
+        Moves the WeatherIcon center to the x and y pos, x and y default to 0
+
+        :param x: Desired center x position
+        :param y: Desired center y position
+        """
+        if (x, y) != self.rect.center:
+            self.rect.center = (x, y)
+            self.dirty = 1
+
+    def checkTime(self):
+        if self.time != datetime.fromtimestamp(time.time()).strftime('%I:%M %p'):
+            self.dirty = 1
+
+    def _return_text(self, string, text_size):
+        AA_SCALING = 3
+
+        fnt = ImageFont.truetype(FONT, text_size)
+        # create a pie image filled to the percentage
+        pil_image = Image.new("RGBA", (round(AA_SCALING * self.width), round(AA_SCALING * self.height / 2)))
+        pil_draw = ImageDraw.Draw(pil_image)
+        w, h = pil_draw.textsize(string, font=fnt)
+        pil_draw.text(((round(AA_SCALING * self.width) - w) // 2, (round(AA_SCALING * self.height / 2) - h) // 2),
+                      string, font=fnt, fill=(self.text_color.r, self.text_color.g, self.text_color.b))
+        # make 3 times smaller for AA like look
+        pil_image = pil_image.resize((self.width, round(self.height / 2)), Image.ANTIALIAS)
+        # convert pie image into PyGame image
+        py_image = pil_to_pygame_image(pil_image)
+        return py_image, py_image.get_rect()
+
+    def update(self):
+        if self.dirty == 1:
+            # print(self)
+            # Clear old image
+            self.image = pygame.Surface([self.width, self.height], pygame.SRCALPHA)
+            self.image.fill(self.background_color)
+            new_rect = self.image.get_rect()
+            new_rect.center = self.rect.center
+            self.rect = new_rect
+
+            # Update date and time
+            self.time = datetime.fromtimestamp(time.time()).strftime('%I:%M %p')
+            self.date = datetime.fromtimestamp(time.time()).strftime('%A, %b %d')
+
+            # Draw and blit text
+            textsurface, textsurface_rect = self._return_text(self.time, self.time_font_size)
+            textsurface_rect.center = (self.image.get_rect().centerx, round(self.image.get_rect().centery / 2))
+            self.image.blit(textsurface, textsurface_rect)
+            textsurface, textsurface_rect = self._return_text(self.date, self.date_font_size)
+            textsurface_rect.center = (self.image.get_rect().centerx, round(3 * self.image.get_rect().centery / 2))
+            self.image.blit(textsurface, textsurface_rect)
+            self.dirty = 0
+
+
 
 
 if __name__ == "__main__":

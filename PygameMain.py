@@ -12,16 +12,18 @@ from WeatherJSON import weather_hook
 # CONSTANTS
 BACKGROUND_COLOR = Color(0)
 
+
 # EVENT TIMERS
 class EventTimer(Enum):
     GET_WEATHER = 30000
+    GET_TIME = 100
 
     def get_event(self):
         """
         Returns the event integer for the specified EvenTimer
         :return: pygame event integer
         """
-        events = {self.GET_WEATHER: USEREVENT + 1}
+        events = {self.GET_WEATHER: USEREVENT + 1, self.GET_TIME: USEREVENT + 2}
         return events.get(self)
 
 
@@ -81,6 +83,8 @@ class SmartMirrorApp:
                     print("Re-pulling weather data")
                 self.weather_widget.set_weather(self.weather)
                 self.weather_widget.update()
+            elif event.type == EventTimer.GET_TIME.get_event():
+                self.weather_widget.clock_widget.checkTime()
 
     def loop(self):
         """
