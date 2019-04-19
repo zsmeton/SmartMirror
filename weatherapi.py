@@ -167,12 +167,15 @@ class WeatherAPI:
 
                 # use sunset information to set the hours time of day
                 if daily is not None:
-                    if (hour_data['time'] > daily.data[0]['sunsetTime'] and hour_data['time'] > daily.data[0][
-                        'sunriseTime']) or (
-                            hour_data['time'] < daily.data[0]['sunsetTime'] and hour_data['time'] < daily.data[0][
-                        'sunriseTime']):
+                    # Fix Moon Phase issue
+                    if hour_data['time'] > daily.data[0]['sunsetTime'] and hour_data['time'] > daily.data[0][
+                        'sunriseTime']:
                         hour_weather.timeDay = TimeOfDay.NIGHT
-                        hour_weather.moonPhase = daily.data[0]['moonPhase']
+                        hour_weather.moonPhase = daily.data[1]['moonPhase']
+                    elif hour_data['time'] < daily.data[0]['sunsetTime'] and hour_data['time'] < daily.data[0][
+                        'sunriseTime']:
+                        hour_weather.timeDay = TimeOfDay.NIGHT
+                        hour_weather.moonPhase = daily.data[1]['moonPhase']
                     else:
                         hour_weather.timeDay = TimeOfDay.DAY
 

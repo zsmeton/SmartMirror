@@ -130,6 +130,68 @@ def get_aalines_surface(surface: pygame.Surface, points: list, thickness, color)
         pygame.gfxdraw.filled_polygon(surface, (UL, UR, BR, BL), color)
 
 
+def arc(draw, bbox, start, end, fill, width=1, segments=100):
+    """
+    Hack that looks similar to PIL's draw.arc(), but can specify a line width.
+    Source: https://stackoverflow.com/questions/7070912/creating-an-arc-with-a-given-thickness-using-pils-imagedraw
+    """
+    # radians
+    start *= math.pi / 180
+    end *= math.pi / 180
+
+    # angle step
+    da = (end - start) / segments
+
+    # shift end points with half a segment angle
+    start -= da / 2
+    end -= da / 2
+
+    # ellips radii
+    rx = (bbox[2] - bbox[0]) / 2
+    ry = (bbox[3] - bbox[1]) / 2
+
+    # box centre
+    cx = bbox[0] + rx
+    cy = bbox[1] + ry
+
+    # segment length
+    l = (rx + ry) * da / 2.0
+
+    for i in range(segments):
+        # angle centre
+        a = start + (i + 0.5) * da
+
+        # x,y centre
+        x = cx + math.cos(a) * rx
+        y = cy + math.sin(a) * ry
+
+        # derivatives
+        dx = -math.sin(a) * rx / (rx + ry)
+        dy = math.cos(a) * ry / (rx + ry)
+
+        draw.line([(x - dx * l, y - dy * l), (x + dx * l, y + dy * l)], fill=fill, width=width)
+
+
+def draw_arc(width, height, fill, thickness, color) -> pygame.image:
+    """
+    Draws an arc using PIL of the following properties, at a larger resolution, scales down for smoothing, and then returns as pygame image
+    :param width:
+    :param height:
+    :param fill: float between 0-1
+    :param thickness:
+    :param color:
+    :return pygame image:
+    """
+    AA_SCALING = 10
+    image = Image.new('RGBA', (width * AA_SCALING, height * AA_SCALING), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(image)
+    arc(draw=draw, bbox=[thickness * AA_SCALING, thickness * AA_SCALING, (width - thickness) * AA_SCALING,
+                         (height - thickness) * AA_SCALING], start=0,
+        end=variable_mapping(fill, 0, 1, 0, 360), fill=color, width=thickness * AA_SCALING, segments=1000)
+    image = image.resize((width, height), resample=Image.ANTIALIAS)
+    return pil_to_pygame_image(image)
+
+
 class WeatherIcon(DirtySprite):
     FONT = 'Pillow/Tests/fonts/arial.ttf'
 
@@ -628,7 +690,10 @@ class WeatherWidget(LayeredDirty):
                                                  line_colors=[self.current_weather_icon.fill_color,
                                                               self.current_weather_icon.text_color], num_of_graphs=2)
 
-        self.clock_widget = ClockWidget(width=round(sizing_small / 4), height=round(sizing_large / 20))
+        self.clock_widget = ClockWidget(width=round(sizing_small / 7.5), height=round(sizing_small / 7.5),
+                                        time_font_size=50, date_font_size=50,
+                                        hour_color=tuple(self.current_weather_icon.unfilled_color),
+                                        minute_color=self.current_weather_icon.fill_color)
 
         super().__init__(
             (self.current_weather_icon, self.hour_grid, self.days_grid, self.day_temperatures, self.clock_widget))
@@ -712,9 +777,12 @@ class ClockWidget(DirtySprite):
         self.width = 100
         self.height = 100
         self.image = pygame.Surface([self.width, self.height], pygame.SRCALPHA)
+        self.text_padding = 10
         self.image.fill(self.background_color)
         self.rect = self.image.get_rect()
         self.text_color = Color(255, 255, 255)
+        self.hour_color = (0, 255, 0)
+        self.minute_color = (0, 0, 255)
         self.time_font_size = 100
         self.date_font_size = 100
         self.__dict__.update(kwargs)
@@ -732,8 +800,7 @@ class ClockWidget(DirtySprite):
             self.dirty = 1
 
     def checkTime(self):
-        if self.time != datetime.fromtimestamp(time.time()).strftime('%I:%M %p'):
-            self.dirty = 1
+        self.dirty = 1
 
     def _return_text(self, string, text_size):
         AA_SCALING = 3
@@ -767,14 +834,34 @@ class ClockWidget(DirtySprite):
 
             # Draw and blit text
             textsurface, textsurface_rect = self._return_text(self.time, self.time_font_size)
-            textsurface_rect.center = (self.image.get_rect().centerx, round(self.image.get_rect().centery / 2))
+            textsurface_rect.centerx = self.image.get_rect().centerx
+            textsurface_rect.centery = self.image.get_rect().centery - self.text_padding
             self.image.blit(textsurface, textsurface_rect)
             textsurface, textsurface_rect = self._return_text(self.date, self.date_font_size)
-            textsurface_rect.center = (self.image.get_rect().centerx, round(3 * self.image.get_rect().centery / 2))
+            textsurface_rect.centerx = self.image.get_rect().centerx
+            textsurface_rect.centery = self.image.get_rect().centery + self.text_padding
             self.image.blit(textsurface, textsurface_rect)
-            self.dirty = 0
 
-
+            # Draw an ellipse of diameter width and height for the hour
+            ellipse_image = draw_arc(self.width, self.height,
+                                     variable_mapping(float(self.time[:2]), 0.0, 12.0, 0.0, 1.0), 4, self.hour_color)
+            ellipse_image_rect = ellipse_image.get_rect()
+            ellipse_image_rect.center = self.image.get_rect().center
+            self.image.blit(ellipse_image, ellipse_image_rect)
+            # Draw second elllipse
+            ellipse_image = draw_arc(round(self.width - 16), round(self.height - 16),
+                                     variable_mapping(float(datetime.fromtimestamp(time.time()).strftime('%S')[:2]),
+                                                      0.0, 60.0, 0.0, 1.0), 4, self.hour_color)
+            ellipse_image_rect = ellipse_image.get_rect()
+            ellipse_image_rect.center = self.image.get_rect().center
+            self.image.blit(ellipse_image, ellipse_image_rect)
+            # Draw Minute ellipse
+            ellipse_image = draw_arc(round(self.width - 8), round(self.height - 8),
+                                     variable_mapping(float(datetime.fromtimestamp(time.time()).strftime('%M')[:2]),
+                                                      0.0, 60.0, 0.0, 1.0), 4, self.minute_color)
+            ellipse_image_rect = ellipse_image.get_rect()
+            ellipse_image_rect.center = self.image.get_rect().center
+            self.image.blit(ellipse_image, ellipse_image_rect)
 
 
 if __name__ == "__main__":
