@@ -167,9 +167,15 @@ class WeatherAPI:
 
                 # use sunset information to set the hours time of day
                 if daily is not None:
-                    if hour_data['time'] > daily.day_2_sunsetTime:
+                    # Fix Moon Phase issue
+                    if hour_data['time'] > daily.data[0]['sunsetTime'] and hour_data['time'] > daily.data[0][
+                        'sunriseTime']:
                         hour_weather.timeDay = TimeOfDay.NIGHT
-                        hour_weather.moonPhase = daily.day_2_moonPhase
+                        hour_weather.moonPhase = daily.data[1]['moonPhase']
+                    elif hour_data['time'] < daily.data[0]['sunsetTime'] and hour_data['time'] < daily.data[0][
+                        'sunriseTime']:
+                        hour_weather.timeDay = TimeOfDay.NIGHT
+                        hour_weather.moonPhase = daily.data[1]['moonPhase']
                     else:
                         hour_weather.timeDay = TimeOfDay.DAY
 
@@ -237,21 +243,22 @@ class WeatherAPI:
                 daily = FIODaily(self.fio)
                 # Check for a y in the first word for grammar
                 self.current_weather.summary = self.current_weather.summary + self._correct_grammar(
-                    "Today there will be", "Today it will be", daily.day_2_summary, "y")
+                    "Today there will be", "Today it will be", daily.data[0]['summary'], "y")
                 # Add high and low tot summary
                 self.current_weather.summary = self.current_weather.summary[
-                                               :-1] + f", with highs in the {int(round(daily.day_2_apparentTemperatureHigh,-1))}s and lows in the {int(round(daily.day_2_apparentTemperatureLow,-1))}s."
+                                               :-1] + f", with highs in the {int(round(daily.data[0]['apparentTemperatureHigh'],-1))}s and lows in the {int(round(daily.data[0]['apparentTemperatureLow'],-1))}s."
                 # get current precipType
                 if self.current_weather.precipType is None:
                     try:
-                        self.current_weather.precipType = daily.day_2_precipType
-                    except AttributeError:
+                        self.current_weather.precipType = daily.data[0]['precipType']
+                    except KeyError:
                         print('darksky returned no precipType for daily',
-                              datetime.fromtimestamp(daily.day_2_time))
+                              datetime.fromtimestamp(daily.data[0]['time']))
                 # get Time of Day for current
-                if time.time() > daily.day_2_sunsetTime:
+                if (currently.time > daily.data[0]['sunsetTime'] and currently.time > daily.data[0]['sunriseTime']) or (
+                        currently.time < daily.data[0]['sunsetTime'] and currently.time < daily.data[0]['sunriseTime']):
                     self.current_weather.timeDay = TimeOfDay.NIGHT
-                    self.current_weather.moonPhase = daily.day_2_moonPhase
+                    self.current_weather.moonPhase = daily.data[0]['moonPhase']
                 else:
                     self.current_weather.timeDay = TimeOfDay.DAY
 
