@@ -14,14 +14,14 @@ pygame.font.init()
 # Constants
 FILL_TO_ANGLE = 360
 TEXT_SIZES = {6, 7, 8, 9, 10, 11, 12, 14, 15, 16, 17, 18, 20, 24, 26, 27, 28, 29, 30, 32, 34, 36}
-
+FONT = 'Pillow/Tests/fonts/arial.ttf'
 
 def get_text_size(proposed_size):
     if proposed_size in TEXT_SIZES:
         return proposed_size
     else:
         closest = None
-        for i in range(-5, 6):
+        for i in range(-30, 30):
             if proposed_size + i in TEXT_SIZES:
                 if closest is None:
                     closest = proposed_size + i
@@ -152,10 +152,10 @@ class WeatherIcon(DirtySprite):
         self.bottom_left_value = ""
         self.bottom_left_unit = ""
         self.center_scale = 1
-        self.top_right_scale = 1.4
+        self.top_right_scale = 1.6
         self.top_left_scale = 1.4
         self.bottom_right_scale = 1.4
-        self.bottom_left_scale = 1.4
+        self.bottom_left_scale = .65
         self.background_color = Color(0, 0, 0, 0)
         self.__dict__.update(kwargs)
         self.image = pygame.Surface([self.size, self.size], pygame.SRCALPHA)
@@ -222,7 +222,7 @@ class WeatherIcon(DirtySprite):
         :return:
         """
         AA_SCALING = 3
-        PADDING = 1.15
+        WIDTH_PADDING = 1.2
 
         string = str()
         try:
@@ -235,19 +235,19 @@ class WeatherIcon(DirtySprite):
 
         str_length_scaling = len(string) / 3
         text_size = AA_SCALING * get_text_size(
-            round((self.size - self.padding) // (scale * str_length_scaling * self.text_ratio)))
+            round(((self.size - self.padding) / (scale * str_length_scaling * self.text_ratio))))
         font = pygame.font.SysFont('arial', text_size)
         textsurface = font.render(string, True, self.text_color)
         textsurface_rect = textsurface.get_rect()
 
-        fnt = ImageFont.truetype(self.FONT, text_size)
+        fnt = ImageFont.truetype(FONT, text_size)
         # create a pie image filled to the percentage
         pil_image = Image.new("RGBA",
-                              (round(PADDING * textsurface_rect.width), round(PADDING * textsurface_rect.height)))
+                              (round(WIDTH_PADDING * textsurface_rect.width), round(textsurface_rect.height)))
         pil_draw = ImageDraw.Draw(pil_image)
-        pil_draw.text((0, 0), string, font=fnt, fill=(255, 255, 255))
+        pil_draw.text((0, 0), string, font=fnt, fill=(self.text_color.r, self.text_color.g, self.text_color.b))
         # make 3 times smaller for AA like look
-        pil_image = pil_image.resize((textsurface_rect.width // AA_SCALING, textsurface_rect.height // AA_SCALING),
+        pil_image = pil_image.resize((pil_image.width // AA_SCALING, pil_image.height // AA_SCALING),
                                      Image.ANTIALIAS)
         # convert pie image into PyGame image
         py_image = pil_to_pygame_image(pil_image)
@@ -325,15 +325,19 @@ class SpriteGrid(DirtySprite):
         self.background_color = Color(0)
         self.width = 100
         self.height = 100
-        self.padding = 12
-        self.height_padding = 10
+        self.padding = self.width / 25
+        self.height_padding = 1
         self.labels = []
         self.text_color = Color(255, 255, 255, 255)
         self.spacing = 0
         self.image = pygame.Surface([self.width, self.height], pygame.SRCALPHA)
         self.image.fill(self.background_color)
         self.rect = self.image.get_rect()
+        self.text_ratio = 7
+        self.text_scale = 0.5
         self.__dict__.update(kwargs)
+        self.grid_width = 0
+
 
     def move(self, x: int = 0, y: int = 0):
         """
@@ -404,11 +408,48 @@ class SpriteGrid(DirtySprite):
         self.rect = self.image.get_rect()
         self.rect.center = old_center_location
 
-        self.spacing = grid_width + (1 + 1 / (len(self.sprites) - 1)) * self.padding
-        # set sprite center locations
+        self.grid_width = grid_width
+        # set sprite locations
         for i, sprite in enumerate(self.sprites):
             sprite.rect.topleft = (
                 i * grid_width + i * (1 + 1 / (len(self.sprites) - 1)) * self.padding, self.height_padding)
+
+    def _return_text(self, string, scale):
+        """
+        Returns a text surface and the surfaces rectangle for a drawn string
+        :param string:
+        :param scale:
+        :return:
+        """
+        AA_SCALING = 3
+        PADDING_WIDTH = 1.3
+        PADDING_HEIGHT = 1
+
+        if len(string) == 0:
+            return pygame.Surface([1, 1]), pygame.Rect([(1, 1), (1, 1)])
+
+        str_length_scaling = 0.4
+        proposed_text_size = round(
+            ((self.width / len(self.sprites)) - self.padding) // ((str_length_scaling) * self.text_ratio) * scale)
+        text_size = AA_SCALING * get_text_size(proposed_text_size)
+        font = pygame.font.SysFont('arial', text_size)
+        textsurface = font.render(string, True, self.text_color)
+        textsurface_rect = textsurface.get_rect()
+
+        fnt = ImageFont.truetype(FONT, text_size)
+        # create a pie image filled to the percentage
+        pil_image = Image.new("RGBA",
+                              (round(PADDING_WIDTH * textsurface_rect.width),
+                               round(PADDING_HEIGHT * textsurface_rect.height)))
+        pil_draw = ImageDraw.Draw(pil_image)
+        pil_draw.text((0, 0), string, font=fnt, fill=(self.text_color.r, self.text_color.g, self.text_color.b))
+        # make 3 times smaller for AA like look
+        pil_image = pil_image.resize((pil_image.width // AA_SCALING, pil_image.height // AA_SCALING),
+                                     Image.ANTIALIAS)
+        # convert pie image into PyGame image
+        py_image = pil_to_pygame_image(pil_image)
+        py_image_rect = py_image.get_rect()
+        return py_image, py_image_rect
 
     def update(self):
         """
@@ -431,11 +472,10 @@ class SpriteGrid(DirtySprite):
                 if i < len(self.labels):
                     if len(self.labels[i]) == 0:
                         continue
-                    font_size = self.height_padding
-                    font = pygame.font.SysFont('arial', font_size)
-                    textsurface = font.render(self.labels[i], True, self.text_color)
-                    textsurface_rect = textsurface.get_rect()
-                    textsurface_rect.center = (round((i + .5) * self.spacing), font_size // 2)
+                    textsurface, textsurface_rect = self._return_text(self.labels[i], self.text_scale)
+                    textsurface_rect.centerx = round((i + .5) * self.grid_width + (i + .5) * (
+                                1 + 1 / (len(self.sprites) - 1)) * self.padding)  # round((i + .5) * self.spacing)
+                    textsurface_rect.centery = self.height_padding // 2
                     self.image.blit(textsurface, textsurface_rect)
 
 
@@ -509,8 +549,7 @@ class TemperatureGraph(DirtySprite):
         point_list = []
         for x, temp in enumerate(data):
             point_list.append([x * spacing + spacing / 2,
-                               variable_mapping(temp, min_temp, max_temp, self.height - self.padding,
-                                                0 + self.padding)])
+                               variable_mapping(temp, min_temp, max_temp, self.height - self.padding, self.padding)])
 
         if self.antialiased:
             get_aalines_surface(self.image, point_list, self.thickness, color)
@@ -573,22 +612,26 @@ class TemperatureGraph(DirtySprite):
 
 class WeatherWidget(LayeredDirty):
     def __init__(self):
-        self.center = 0.85
+        sizing_small = WIDTH if WIDTH < HEIGHT else HEIGHT
+        sizing_large = WIDTH if WIDTH > HEIGHT else HEIGHT
+        self.center = 0.8
         # Create Widgets Dirty Sprites
-        self.current_weather_icon = WeatherIcon(size=round((WIDTH if WIDTH < HEIGHT else HEIGHT) / 9),
-                                                padding=round(WIDTH / 75))
-        self.hour_grid = SpriteGrid(width=WIDTH // 4, padding=round(WIDTH / 400), height_padding=round(WIDTH / 150))
-        self.days_grid = SpriteGrid(width=WIDTH // 4, padding=round(WIDTH / 400), height_padding=round(WIDTH / 150))
-        self.day_temperatures = TemperatureGraph(width=WIDTH // 4, height=HEIGHT // 10,
+        self.current_weather_icon = WeatherIcon(size=round(sizing_small / 10),
+                                                padding=round(sizing_small / 75))
+        self.hour_grid = SpriteGrid(width=sizing_small // 3, padding=round(sizing_small / 300),
+                                    height_padding=round(sizing_small / 80))
+        self.days_grid = SpriteGrid(width=sizing_small // 3, padding=round(sizing_small / 500),
+                                    height_padding=round(sizing_small / 80))
+        self.day_temperatures = TemperatureGraph(width=round(sizing_small / 2.7), height=sizing_large // 20,
                                                  line_colors=[self.current_weather_icon.fill_color,
                                                               self.current_weather_icon.text_color], num_of_graphs=2)
 
         super().__init__((self.current_weather_icon, self.hour_grid, self.days_grid, self.day_temperatures))
         # set icon locations
-        self.current_weather_icon.move(int(self.center * WIDTH), int(0.10 * HEIGHT))
-        self.hour_grid.move(int(self.center * WIDTH), int(0.25 * HEIGHT))
-        self.days_grid.move(int(self.center * WIDTH), int(0.4 * HEIGHT))
-        self.day_temperatures.move(int(self.center * WIDTH), int(0.5 * HEIGHT))
+        self.current_weather_icon.move(int(self.center * WIDTH), int(0.05 * HEIGHT))
+        self.hour_grid.move(int(self.center * WIDTH), int(0.12 * HEIGHT))
+        self.days_grid.move(int(self.center * WIDTH), int(0.18 * HEIGHT))
+        self.day_temperatures.move(int(self.center * WIDTH), int(0.24 * HEIGHT))
 
         # create object surface and rectangle
         self.image = pygame.Surface([WIDTH, HEIGHT])
@@ -607,8 +650,7 @@ class WeatherWidget(LayeredDirty):
                                                        center_unit="°",
                                                        top_right_value=weather_dict['current']['value'],
                                                        top_right_unit=weather_dict['current']['unit'],
-                                                       bottom_left_value=f"Feel: {round(weather_dict['current']['feels'])}°",
-                                                       bottom_left_scale=.5)
+                                                       bottom_left_value=f"Feel: {round(weather_dict['current']['feels'])}°")
 
         # Update the Hour Grid
         hour_labels = []
