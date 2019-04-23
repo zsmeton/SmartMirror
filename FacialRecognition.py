@@ -176,7 +176,7 @@ if __name__ == "__main__":
             if PYCAMERA:
                 # Take a picture and run recogntion
                 camera.capture(CAMERA_OUTPUT_FILE)
-            rec.update('unknown_image.PNG')  # CAMERA_OUTPUT_FILE)
+            rec.update('unknown.png')  # CAMERA_OUTPUT_FILE)
             print('Finished running facial recognition on image')
             # Say hello if new user recognition
             for user in rec.who:

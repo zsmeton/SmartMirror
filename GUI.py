@@ -691,7 +691,7 @@ class WeatherWidget(LayeredDirty):
                                                               self.current_weather_icon.text_color], num_of_graphs=2)
 
         self.clock_widget = ClockWidget(width=round(sizing_small / 7.5), height=round(sizing_small / 7.5),
-                                        time_font_size=50, date_font_size=50,
+                                        time_font_size=50, date_font_size=40,
                                         hour_color=tuple(self.current_weather_icon.unfilled_color),
                                         minute_color=self.current_weather_icon.fill_color)
 
@@ -702,7 +702,7 @@ class WeatherWidget(LayeredDirty):
         self.hour_grid.move(int(self.center * WIDTH), int(0.12 * HEIGHT))
         self.days_grid.move(int(self.center * WIDTH), int(0.18 * HEIGHT))
         self.day_temperatures.move(int(self.center * WIDTH), int(0.24 * HEIGHT))
-        self.clock_widget.move(int(WIDTH / 7), int(0.04 * HEIGHT))
+        self.clock_widget.move(int(WIDTH / 8), int(0.055 * HEIGHT))
 
         # create object surface and rectangle
         self.image = pygame.Surface([WIDTH, HEIGHT])

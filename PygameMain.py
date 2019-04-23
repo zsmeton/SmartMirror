@@ -15,7 +15,7 @@ BACKGROUND_COLOR = Color(0)
 
 # EVENT TIMERS
 class EventTimer(Enum):
-    GET_WEATHER = 30000
+    GET_WEATHER = 100000
     GET_TIME = 1000
 
     def get_event(self):
