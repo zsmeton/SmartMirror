@@ -46,6 +46,25 @@ class WeatherParser:
                 return None
 
 
+class FactParser:
+    capital_of_france_strings = ["capital", "france"]
+    colorado_state_rock_strings = ["colorado", "state", "rock"]
+    tiger_woods_strings = ['who', 'tiger', 'woods']
+
+    def __init__(self):
+        super().__init__()
+
+    def parse(self, string: str):
+        if count(self.capital_of_france_strings, string) >= 2:
+            return 'The capital of france is paris'
+        elif count(self.colorado_state_rock_strings, string) >= 3:
+            return 'The state rock for colorado is basalite'
+        elif count(self.tiger_woods_strings, string) >= 3:
+            return 'Tiger Woods is a professional golfer.'
+        else:
+            return None
+
+
 def line_prepender(filename, line):
     with open(filename, 'r+') as f:
         content = f.read()
@@ -54,10 +73,19 @@ def line_prepender(filename, line):
 
 
 def parse_string(line):
+    result = None
     weather_result = weather_parser.parse(line)
+    fact_result = fact_parser.parse(line)
+    # Add result string here
     if weather_result is not None:
+        result = weather_result
+    elif fact_result is not None:
+        result = fact_result
+    # add check result string for None
+
+    if result is not None:
         with open(OUTPUT_STRING_FILE, "a") as fout:
-            fout.write(weather_result + "\n")
+            fout.write(result + "\n")
             return True
     return False
 
@@ -68,7 +96,8 @@ if __name__ == "__main__":
     delay = 10
     sentence_lookahead = 1
     weather_parser = WeatherParser()
-    # face_recognition_parser = ()
+    fact_parser = FactParser()
+    # Add parser
     while True:
         # read file into list
         lines = [line.rstrip() for line in open(file_name)]
