@@ -74,7 +74,9 @@ class SmartMirrorApp:
                 if event.key == pygame.K_ESCAPE:
                     self.done = True
             elif event.type == EventTimer.GET_WEATHER.get_event():
+                # draw the weather widget on getWeather event
                 self.background.fill(BACKGROUND_COLOR)
+                # clear the screen a few hundred times to make certain that the weather widget updates properly
                 self.weather_widget.clear(self.screen, self.background)
                 self.weather_widget = WeatherWidget()
                 self.weather_widget.clear(self.screen, self.background)
