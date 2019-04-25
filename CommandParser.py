@@ -1,6 +1,9 @@
 import json
 import os
 import time
+#New module. Install word2number or everything breaks. 
+from word2number import w2n 
+import picamera
 
 from FileSettings import INPUT_STRING_FILE, OUTPUT_STRING_FILE, WEATHER_FILE
 from WeatherJSON import weather_hook
@@ -19,6 +22,32 @@ def count(words: list, string: str) -> int:
             count += 1
     return count
 
+
+class SettingsParser:
+    settingsWords = ["volume down", "volume up", "volume level", "mute", "add new user", "shut down"]
+    def parse(self, string: str):
+        if count(self.settingsWords, string > 1):
+            return "You may only change one setting at a time"
+        if "volume down" in string.lower():
+            #Call method to reduce volume by one(or ten, don't know what the scale is) notches
+        elif "volume up" in string.lower():
+            #Call method to increase volume by one(or ten, don't know what the scale is) notches
+        elif "volume level" in string.lower():
+            try:
+                newLevel = w2n.word_to_num(string)
+            except ValueError:
+                with open("say.txt", 'a') as mirrorsay:
+                    mirrorsay.write("\n" + "invalid volume")
+                    #add check to see if volume is within whatever bounds it has here, return "invalid volume level" if not
+            if newLevel < 0 or newLevel > 100:
+                with open("say.txt", 'a') as mirrorsay:
+                    mirrorsay.write("\n" + "invalid volume")
+            newLevel = newLevel/100
+            #Set speaker volume to newLevel value
+        elif "mute" in string.lower():
+            #volume to zero
+        
+            
 
 class WeatherParser:
     # The word that must be in the string for weather parser to parse
