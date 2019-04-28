@@ -43,8 +43,7 @@ class SettingsParser:
             newLevel = arr[0]
             if newLevel < 0 or newLevel > 100:
                 #fail if volume is out of bounds
-                with open("say.txt", 'a') as mirrorsay:
-                    mirrorsay.write(" invalid volume")
+                return "invalid volume"
             else:
                 command = "amixer sset Master {}%".format(str(newLevel))
                 process = subprocess.Popen(command.split(), stdout = subprocess.PIPE)
@@ -56,6 +55,7 @@ class SettingsParser:
             #Try changing the command contents if this doesn't work. 
             command = "sudo shutdown"
             process = subprocess.Popen(command.split(), stdout = subprocess.PIPE)
+            return "shutting down"
         
             
 
@@ -115,13 +115,13 @@ def parse_string(line):
     result = None
     weather_result = weather_parser.parse(line)
     fact_result = fact_parser.parse(line)
-    # Add result string here
+    settings_result = settings_parser.parse(line)
     if weather_result is not None:
         result = weather_result
     elif fact_result is not None:
         result = fact_result
-    # add check result string for None
-
+    elif settings_result is not None:
+        result = settings_result
     if result is not None:
         with open(OUTPUT_STRING_FILE, "a") as fout:
             fout.write(result + "\n")
@@ -136,7 +136,7 @@ if __name__ == "__main__":
     sentence_lookahead = 1
     weather_parser = WeatherParser()
     fact_parser = FactParser()
-    # Add parser
+    settings_parser = SettingsParser()
     while True:
         # read file into list
         lines = [line.rstrip() for line in open(file_name)]
