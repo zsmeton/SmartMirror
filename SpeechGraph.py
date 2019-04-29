@@ -7,7 +7,7 @@ import numpy as np
 from scipy.io import wavfile
 import time
 import os.path
-import speaker
+import Speaker
 from FileSettings import SPEAKER_FILE
 
 filename = SPEAKER_FILE
@@ -28,7 +28,7 @@ while True:
     # check if current audio file exists 
     if os.path.isfile(filename) == True:
         # create sound object with the desired audio file
-        mySound = speaker.Speaker(filename)
+        mySound = Speaker.Speaker(filename)
         # collect frames/second and sound pressure data from .wav file
         fs, data = wavfile.read(filename)
         # time for each iteration (display update)
