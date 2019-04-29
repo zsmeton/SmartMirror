@@ -1,5 +1,5 @@
 #!/bin/bash
-python weatherApi.py &
-python PygameMain.py &
-python FacialRecognition.py &
-python WeatherParser.py &
+python3.5 WeatherApi.py &
+python3.5 PygameMain.py &
+python3.5 FacialRecognition.py &
+python3.5 CommandParser.py &
